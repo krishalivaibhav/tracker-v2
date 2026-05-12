@@ -291,7 +291,7 @@ function renderDashboard() {
   document.getElementById('tab-dashboard').innerHTML = `
     <div class="page-header pop-in">
       <div>
-        <h1 class="page-title">${greet}, <em>Vaibhav</em>.</h1>
+        <h1 class="page-title">${greet}, <em>${currentUser?.name?.split(' ')[0] || 'there'}</em>.</h1>
         <p class="page-sub">${days} days to placement season · ${stats.total}/${LC_TOTAL} problems solved</p>
       </div>
     </div>
