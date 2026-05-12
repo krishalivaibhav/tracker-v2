@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Track+</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="styles.css"/>
+  <script>(function(){var t=localStorage.getItem('vk_theme');if(t)document.documentElement.setAttribute('data-theme',t);})();</script>
+</head>
+<body>
+
+<div class="app" style="display:none;">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">T+</div>
+      <div class="brand-name">Track<span>+</span></div>
+    </div>
+
+    <div class="nav-section-label">Workspace</div>
+    <nav class="nav" id="sidebar-nav"><!-- rendered by JS --></nav>
+
+    <div class="user-card">
+      <div class="user-row">
+        <div class="avatar" id="user-avatar-el">VK</div>
+        <div>
+          <div class="user-name" id="user-display-name">Vaibhav Krishali</div>
+        </div>
+      </div>
+      <div>
+        <div class="xp-text" style="margin-bottom:5px;">
+          <span>LeetCode</span>
+          <span id="sidebar-lc-count">0 / 200</span>
+        </div>
+        <div class="xp-bar">
+          <div class="xp-bar-fill" id="sidebar-xp-fill" style="width:0%"></div>
+        </div>
+      </div>
+      <a id="logout-btn" href="/api/auth/logout" style="display:none;margin-top:10px;font-size:11.5px;color:var(--text-faint);text-decoration:none;align-items:center;gap:5px;">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="11" height="11"><path d="M5 1H2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3M9 10l3-3-3-3M12 7H5"/></svg>
+        Sign out
+      </a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="breadcrumb">
+        <span id="topbar-page" class="breadcrumb-current">Dashboard</span>
+      </div>
+      <div id="topbar-streak" class="streak-chip" style="margin-left:auto;">
+        <svg class="flame" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 2S5 5.5 5 8.5a3 3 0 0 0 6 0C11 5.5 8 2 8 2zm0 4s-1.5 1.5-1.5 2.5a1.5 1.5 0 0 0 3 0C9.5 7.5 8 6 8 6z"/>
+        </svg>
+        <span id="topbar-streak-val">0</span>&nbsp;day streak
+      </div>
+      <button class="icon-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle dark mode">
+        <svg id="theme-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="14" height="14">
+          <circle cx="8" cy="8" r="3"/>
+          <path d="M8 1.5v1M8 13.5v1M1.5 8h1M13.5 8h1M3.6 3.6l.7.7M11.7 11.7l.7.7M3.6 12.4l.7-.7M11.7 4.3l.7-.7"/>
+        </svg>
+      </button>
+    </header>
+
+    <main class="content" id="content-area">
+      <div id="tab-dashboard"     class="tab-section active"></div>
+      <div id="tab-leetcode"      class="tab-section"></div>
+      <div id="tab-applications"  class="tab-section"></div>
+      <div id="tab-projects"      class="tab-section"></div>
+      <div id="tab-cgpa"          class="tab-section"></div>
+      <div id="tab-career"        class="tab-section"></div>
+    </main>
+  </div>
+</div>
+
+<!-- Application Modal -->
+<div id="app-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('app-modal')">
+  <div class="modal">
+    <div class="modal-title" id="app-modal-title">Add Application</div>
+    <input type="hidden" id="app-edit-id" value="">
+    <div class="form-row" style="margin-bottom:14px;">
+      <div class="form-group"><label class="form-label">Company</label><input type="text" id="app-company" placeholder="e.g. Razorpay"></div>
+      <div class="form-group"><label class="form-label">Role</label><input type="text" id="app-role" placeholder="e.g. SDE Intern"></div>
+    </div>
+    <div class="form-row" style="margin-bottom:14px;">
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select id="app-status">
+          <option value="Wishlist">Wishlist</option>
+          <option value="Applied" selected>Applied</option>
+          <option value="OA">Online Assessment</option>
+          <option value="Interview">Interview</option>
+          <option value="Offer">Offer</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Date Applied</label><input type="date" id="app-date"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea class="notes-area" id="app-notes" placeholder="Referral, source, deadline..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('app-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveApp()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="auth-overlay" class="auth-overlay" style="display:none;">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="brand-mark" style="width:44px;height:44px;font-size:14px;margin:0 auto 14px;">T+</div>
+      <div style="font-size:19px;font-weight:700;letter-spacing:-0.02em;margin-bottom:6px;">Track+</div>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 28px;">Your personal DSA &amp; placement companion</p>
+    </div>
+    <a href="/api/auth/login" class="btn btn-primary auth-oauth-btn">
+      <svg viewBox="0 0 48 48" width="16" height="16" style="flex-shrink:0;">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Continue with Google
+    </a>
+  </div>
+</div>
+
+<!-- Landing Page -->
+<div id="landing-page" class="landing-page" style="display:none;">
+  <canvas id="landing-canvas" class="landing-canvas"></canvas>
+  <div class="landing-blob landing-blob-1"></div>
+  <div class="landing-blob landing-blob-2"></div>
+  <div class="landing-blob landing-blob-3"></div>
+
+  <nav class="landing-nav">
+    <div class="landing-nav-brand">
+      <div class="landing-nav-mark" style="font-size:13px;">T+</div>
+      <span class="landing-nav-name">Track+</span>
+    </div>
+    <a href="/api/auth/login" class="landing-google-btn">
+      <svg viewBox="0 0 48 48" width="15" height="15" style="flex-shrink:0;">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Sign in
+    </a>
+  </nav>
+
+  <div class="landing-hero">
+    <div class="landing-eyebrow">Track+</div>
+    <h1 class="landing-headline">
+      Master DSA.<br>
+      <span class="landing-headline-grad">Land Your Dream Job.</span>
+    </h1>
+    <p class="landing-sub">Track every problem, every application, every opportunity — all in one place, powered by AI.</p>
+
+    <div class="landing-quote-wrap">
+      <div class="landing-quote-mark">"</div>
+      <div>
+        <div class="landing-quote-text" id="landing-quote-text" style="transition:opacity .35s ease;"></div>
+        <div class="landing-quote-author" id="landing-quote-author"></div>
+      </div>
+    </div>
+
+    <div class="landing-features-row">
+      <span class="landing-feat-chip">📊 DSA Sheet</span>
+      <span class="landing-feat-chip">🤖 AI Resume Scanner</span>
+      <span class="landing-feat-chip">💼 Job Tracker</span>
+      <span class="landing-feat-chip">📈 CGPA Planner</span>
+      <span class="landing-feat-chip">⚡ Groq AI</span>
+    </div>
+
+    <a href="/api/auth/login" class="landing-cta">
+      <svg viewBox="0 0 48 48" width="18" height="18" style="flex-shrink:0;">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Continue with Google
+    </a>
+    <button id="landing-enter-btn" class="landing-enter-btn" onclick="hideLanding()" style="display:none;">
+      Enter App →
+    </button>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+
+<!-- Code Editor Modal -->
+<div id="code-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeCodeModal()">
+  <div class="code-modal">
+    <div class="code-modal-header">
+      <div>
+        <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:2px;" id="code-modal-step-label"></div>
+        <div class="code-modal-title" id="code-modal-title">Problem</div>
+      </div>
+      <button class="btn btn-ghost" onclick="closeCodeModal()">✕ Close</button>
+    </div>
+    <div class="code-modal-body">
+      <div class="code-modal-desc" id="code-modal-desc"></div>
+      <div class="code-modal-editor-wrap">
+        <div class="code-modal-toolbar">
+          <select id="code-lang-select" class="code-lang-select" onchange="switchCodeLang(this.value)">
+            <option value="python">Python 3</option>
+            <option value="cpp">C++</option>
+          </select>
+          <button class="btn btn-primary btn-sm" id="run-code-btn" onclick="runUserCode()">▶ Run</button>
+          <button class="btn btn-sm" id="mark-done-btn" onclick="markCodeProblemDone()">Mark as Solved</button>
+        </div>
+        <div class="stdin-wrap">
+          <div class="stdin-label">Stdin</div>
+          <textarea id="code-stdin" class="stdin-textarea" placeholder="Input for your program (one value per line)…" spellcheck="false"></textarea>
+        </div>
+        <div id="monaco-container"></div>
+        <div class="code-output-wrap" id="code-output-wrap" style="display:none;">
+          <div class="code-output-label">Output</div>
+          <pre id="code-output-pre"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile bottom nav -->
+<nav class="mobile-nav" id="mobile-nav">
+  <button class="mobile-nav-item" data-tab="home" onclick="switchTab('home')">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 6.5L8 1.5l6.5 5V14a.5.5 0 0 1-.5.5H10V10H6v4.5H2a.5.5 0 0 1-.5-.5V6.5z"/></svg>
+    <span>Home</span>
+  </button>
+  <button class="mobile-nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
+    <svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+    <span>Dashboard</span>
+  </button>
+  <button class="mobile-nav-item" data-tab="leetcode" onclick="switchTab('leetcode')">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3.5 5L1.5 8l2 3M12.5 5l2 3-2 3M9.5 2.5l-3 11"/></svg>
+    <span>DSA</span>
+  </button>
+  <button class="mobile-nav-item" data-tab="career" onclick="switchTab('career')">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="14" height="10" rx="1.5"/><path d="M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M8 9h.01"/></svg>
+    <span>Career</span>
+  </button>
+</nav>
+</body>
+</html>
