@@ -10,7 +10,6 @@ Your personal DSA & placement companion — track every problem, every applicati
 - **AI Resume Scanner** — ATS score, strengths, improvement areas, and rewritten bullets via Groq
 - **Resume Upgrade** — AI-rewrites your resume for a target role with side-by-side Overleaf-style preview
 - **Job Tracker** — Track applications with status, notes, and stats
-- **CGPA Planner** — Forecast semester GPA
 - **Landing page** — Animated hero with particle network and rotating motivational quotes
 
 ## Stack
