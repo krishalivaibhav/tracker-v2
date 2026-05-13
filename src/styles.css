@@ -719,9 +719,73 @@ select option { background: var(--surface-2); }
 .stdin-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-ring); }
 
 #monaco-container {
-  flex: 1; min-height: 0;
+  flex: 1; min-height: 320px;
   border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden;
 }
+.editor-root {
+  display: flex; height: 100%;
+  background: #1e1e1e; border-radius: var(--r-md);
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 13px; line-height: 1.6;
+}
+[data-theme="light"] .editor-root { background: #fff; }
+
+.editor-gutter {
+  flex-shrink: 0;
+  padding: 14px 10px 14px 14px; text-align: right;
+  background: #252526; color: #6e7681;
+  font-size: 13px; line-height: 1.6;
+  min-width: 48px; user-select: none; white-space: pre;
+  overflow: hidden; border-right: 1px solid #3c3c3c;
+}
+[data-theme="light"] .editor-gutter { background: #f0f0f0; color: #aaa; border-right-color: #ddd; }
+
+.editor-main { position: relative; flex: 1; overflow: hidden; }
+
+/* pre and textarea are perfectly overlaid — must share identical box model */
+.editor-pre, .editor-textarea {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  margin: 0; padding: 14px;
+  border: none; outline: none;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 13px; line-height: 1.6;
+  white-space: pre; word-break: normal; tab-size: 4;
+  box-sizing: border-box;
+}
+.editor-pre {
+  overflow: hidden; /* scrolled via JS — no independent scrollbar that shifts content */
+  color: #d4d4d4; background: transparent;
+  pointer-events: none; z-index: 0;
+}
+[data-theme="light"] .editor-pre { color: #1e1e1e; }
+
+.editor-textarea {
+  overflow: auto; /* only the textarea scrolls */
+  color: transparent; background: transparent;
+  caret-color: #aeafad; -webkit-text-fill-color: transparent;
+  resize: none; z-index: 1;
+}
+[data-theme="light"] .editor-textarea { caret-color: #000; }
+
+/* VS Code dark+ token colours */
+.hl-k  { color: #569cd6; }
+.hl-b  { color: #4ec9b0; }
+.hl-s  { color: #ce9178; }
+.hl-c  { color: #6a9955; font-style: italic; }
+.hl-n  { color: #b5cea8; }
+.hl-f  { color: #dcdcaa; }
+.hl-pp { color: #c586c0; }
+.hl-op { color: #d4d4d4; }
+
+/* VS Code light token colours */
+[data-theme="light"] .hl-k  { color: #0000ff; }
+[data-theme="light"] .hl-b  { color: #267f99; }
+[data-theme="light"] .hl-s  { color: #a31515; }
+[data-theme="light"] .hl-c  { color: #008000; }
+[data-theme="light"] .hl-n  { color: #098658; }
+[data-theme="light"] .hl-f  { color: #795e26; }
+[data-theme="light"] .hl-pp { color: #af00db; }
+[data-theme="light"] .hl-op { color: #1e1e1e; }
 .code-output-wrap {
   flex-shrink: 0; background: var(--surface-2); border: 1px solid var(--border);
   border-radius: var(--r-md); padding: 10px 12px;

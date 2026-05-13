@@ -1,4 +1,8 @@
 {
+  "installCommand": "npm install",
+  "buildCommand": "npm run build",
+  "devCommand": "npx vite --port $PORT",
+  "outputDirectory": "dist",
   "headers": [
     {
       "source": "/(.*)",

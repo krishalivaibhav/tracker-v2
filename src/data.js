@@ -1096,3 +1096,6 @@ const A2Z_STEPS = [
     ]
   },
 ];
+
+window.A2Z_STEPS = A2Z_STEPS;
+export { A2Z_STEPS };

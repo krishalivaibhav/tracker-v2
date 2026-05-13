@@ -1,5 +1,7 @@
 // app.js — Vaibhav Placement Tracker · Striver A2Z Edition
 
+const A2Z_STEPS = window.A2Z_STEPS;
+
 /* ─── Constants ─────────────────────────────────────────────── */
 const PLACEMENT_DATE = new Date('2026-10-01');
 let STORE_KEY = 'vk_a2z_v1';
@@ -279,9 +281,8 @@ function toggleTheme() {
   html.setAttribute('data-theme', next);
   localStorage.setItem('vk_theme', next);
   applyThemeIcon();
-  if (window._monacoEditor) {
-    window.monaco.editor.setTheme(next === 'dark' ? 'vs-dark' : 'vs');
-  }
+  const ta = document.getElementById('editor-ta');
+  if (ta) ta.className = 'editor-textarea'; // theme via CSS data-theme attribute
 }
 
 /* ─── Dashboard ─────────────────────────────────────────────── */
@@ -676,7 +677,6 @@ function saveDailyNote(date, val) {
 }
 
 /* ─── Code Editor ───────────────────────────────────────────── */
-const MONACO_LANG_MAP = { python: 'python', cpp: 'cpp' };
 
 /* Analyse a raw example-input string and return a shape descriptor */
 function _analyseInput(rawInput, type) {
@@ -716,124 +716,96 @@ function _analyseInput(rawInput, type) {
 }
 
 function starterCode(problem, lang) {
-  const type   = problem.type || 'custom';
+  const type    = problem.type || 'custom';
   const firstEx = (problem.examples || [])[0];
   const { shape } = _analyseInput(firstEx ? firstEx.input : '', type);
 
-  const py = {
-    single_int:        'n = int(input())\n\n# your solution here\n',
-    single_str:        's = input()\n\n# your solution here\n',
-    two_ints_sameline: 'a, b = map(int, input().split())\n\n# your solution here\n',
-    two_strs_sameline: 'a, b = input().split()\n\n# your solution here\n',
-    two_ints_twolines: 'a = int(input())\nb = int(input())\n\n# your solution here\n',
-    n_then_array:      'n = int(input())\narr = list(map(int, input().split()))\n\n# your solution here\n',
-    array_sameline:    'arr = list(map(int, input().split()))\n\n# your solution here\n',
-    two_arrays:        'arr1 = list(map(int, input().split()))\narr2 = list(map(int, input().split()))\n\n# your solution here\n',
-    n_then_two_arrays: 'n = int(input())\narr1 = list(map(int, input().split()))\narr2 = list(map(int, input().split()))\n\n# your solution here\n',
-    pattern:           'n = int(input())\n\n# print pattern here\nfor i in range(1, n + 1):\n    print("*" * i)\n',
-    custom:            '# your solution here\n',
+  // ── Python boilerplate ──────────────────────────────────────
+  const pyHead = 'import sys\ninput = sys.stdin.readline\n\n';
+  const pyBody = {
+    single_int:        'n = int(input())\n\n# write your solution here\nprint(n)\n',
+    single_str:        's = input().strip()\n\n# write your solution here\nprint(s)\n',
+    two_ints_sameline: 'a, b = map(int, input().split())\n\n# write your solution here\nprint(a + b)\n',
+    two_strs_sameline: 'a, b = input().split()\n\n# write your solution here\n',
+    two_ints_twolines: 'a = int(input())\nb = int(input())\n\n# write your solution here\n',
+    n_then_array:      'n = int(input())\narr = list(map(int, input().split()))\n\n# write your solution here\nprint(*arr)\n',
+    array_sameline:    'arr = list(map(int, input().split()))\n\n# write your solution here\nprint(*arr)\n',
+    two_arrays:        'arr1 = list(map(int, input().split()))\narr2 = list(map(int, input().split()))\n\n# write your solution here\n',
+    n_then_two_arrays: 'n = int(input())\narr1 = list(map(int, input().split()))\narr2 = list(map(int, input().split()))\n\n# write your solution here\n',
+    pattern:           'n = int(input())\n\nfor i in range(1, n + 1):\n    print("*" * i)\n',
+    custom:            '# write your solution here\n',
   };
 
-  const cpp_head = '#include<bits/stdc++.h>\nusing namespace std;\nint main(){\n';
-  const cpp_tail = '  // your solution here\n  return 0;\n}\n';
-  const cpp = {
-    single_int:        cpp_head + '  int n; cin >> n;\n\n' + cpp_tail,
-    single_str:        cpp_head + '  string s; cin >> s;\n\n' + cpp_tail,
-    two_ints_sameline: cpp_head + '  int a, b; cin >> a >> b;\n\n' + cpp_tail,
-    two_strs_sameline: cpp_head + '  string a, b; cin >> a >> b;\n\n' + cpp_tail,
-    two_ints_twolines: cpp_head + '  int a, b; cin >> a >> b;\n\n' + cpp_tail,
-    n_then_array:      cpp_head + '  int n; cin >> n;\n  vector<int> arr(n);\n  for(int i = 0; i < n; i++) cin >> arr[i];\n\n' + cpp_tail,
-    array_sameline:    cpp_head + '  int x;\n  vector<int> arr;\n  while(cin >> x) arr.push_back(x);\n\n' + cpp_tail,
-    two_arrays:        cpp_head + '  int n; cin >> n;\n  vector<int> a(n), b(n);\n  for(int i=0;i<n;i++) cin>>a[i];\n  for(int i=0;i<n;i++) cin>>b[i];\n\n' + cpp_tail,
-    n_then_two_arrays: cpp_head + '  int n; cin >> n;\n  vector<int> a(n), b(n);\n  for(int i=0;i<n;i++) cin>>a[i];\n  for(int i=0;i<n;i++) cin>>b[i];\n\n' + cpp_tail,
-    pattern:           cpp_head + '  int n; cin >> n;\n  for(int i=1;i<=n;i++){\n    for(int j=0;j<i;j++) cout<<"*";\n    cout<<"\\n";\n  }\n  return 0;\n}\n',
-    custom:            cpp_head + cpp_tail,
+  // ── C++ boilerplate ─────────────────────────────────────────
+  const cppHead = '#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n\n';
+  const cppTail = '\n    // write your solution here\n\n    return 0;\n}\n';
+  const cppBody = {
+    single_int:        '    int n;\n    cin >> n;\n',
+    single_str:        '    string s;\n    cin >> s;\n',
+    two_ints_sameline: '    int a, b;\n    cin >> a >> b;\n',
+    two_strs_sameline: '    string a, b;\n    cin >> a >> b;\n',
+    two_ints_twolines: '    int a, b;\n    cin >> a >> b;\n',
+    n_then_array:      '    int n;\n    cin >> n;\n    vector<int> arr(n);\n    for (int i = 0; i < n; i++) cin >> arr[i];\n',
+    array_sameline:    '    int x;\n    vector<int> arr;\n    while (cin >> x) arr.push_back(x);\n',
+    two_arrays:        '    int n;\n    cin >> n;\n    vector<int> a(n), b(n);\n    for (int i = 0; i < n; i++) cin >> a[i];\n    for (int i = 0; i < n; i++) cin >> b[i];\n',
+    n_then_two_arrays: '    int n;\n    cin >> n;\n    vector<int> a(n), b(n);\n    for (int i = 0; i < n; i++) cin >> a[i];\n    for (int i = 0; i < n; i++) cin >> b[i];\n',
+    pattern:           '    int n;\n    cin >> n;\n    for (int i = 1; i <= n; i++) {\n        for (int j = 0; j < i; j++) cout << "*";\n        cout << "\\n";\n    }\n',
+    custom:            '',
   };
 
-  if (lang === 'python') return py[shape] || py.custom;
-  if (lang === 'cpp')    return cpp[shape] || cpp.custom;
-  return '# your solution here\n';
+  if (lang === 'python') return pyHead + (pyBody[shape] || pyBody.custom);
+  if (lang === 'cpp')    return cppHead + (cppBody[shape] || '') + cppTail;
+  return '# write your solution here\n';
 }
 
-/* ─── Runtimes ───────────────────────────────────────────────── */
+/* ─── Code runner ─────────────────────────────────────────────── */
 
-let _pyodideReady = null;
-
-function _loadScript(src) {
-  return new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.src = src;
-    s.onload = resolve;
-    s.onerror = () => reject(new Error('Failed to load ' + src));
-    document.head.appendChild(s);
-  });
+function _hash(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = Math.imul(31, h) + s.charCodeAt(i) | 0;
+  return (h >>> 0).toString(36);
 }
 
-function _getPyodide() {
-  if (!_pyodideReady) {
-    const CDN = 'https://cdn.jsdelivr.net/pyodide/v0.27.0/full/';
-    _pyodideReady = _loadScript(CDN + 'pyodide.js')
-      .then(() => window.loadPyodide({ indexURL: CDN }))
-      .then(py => {
-        // Pre-warm: set up stdout capture template once
-        py.runPython('import sys, io, builtins, traceback');
-        return py;
-      });
+async function _runCode(lang, code, stdin) {
+  const cacheKey = `cc_${lang}_${_hash(code + '\x00' + stdin)}`;
+  const cached = sessionStorage.getItem(cacheKey);
+  if (cached !== null) return cached;
+
+  let res;
+  try {
+    res = await fetch('/api/code/run', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ source_code: code, language: lang, stdin }),
+    });
+  } catch (err) {
+    throw new Error('Compiler API is unreachable. Start the app with npm run dev or vercel dev, then try again.');
   }
-  return _pyodideReady;
+
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    if (res.status === 404) {
+      throw new Error('Compiler API route was not found. Restart the dev server so Vite loads the local API bridge.');
+    }
+    throw new Error(`Compiler API returned an invalid response (${res.status}).`);
+  }
+
+  if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
+  const out = data.output || '(no output)';
+  if (!data.is_error) { try { sessionStorage.setItem(cacheKey, out); } catch {} }
+  return out;
 }
 
-
-async function _runPython(code, stdinText) {
-  const py = await _getPyodide();
-  py.globals.set('_user_code', code);
-  py.globals.set('_stdin_data', py.toPy(stdinText.split('\n')));
-
-  const output = await py.runPythonAsync(`
-_buf = io.StringIO()
-_old_out, _old_err = sys.stdout, sys.stderr
-sys.stdout = sys.stderr = _buf
-_si = [0]
-
-def _inp(prompt=''):
-    i = _si[0]; _si[0] += 1
-    lines = list(_stdin_data)
-    return str(lines[i]) if i < len(lines) else ''
-
-builtins.input = _inp
-
-try:
-    exec(str(_user_code), {})
-except SystemExit:
-    pass
-except Exception:
-    _buf.write(traceback.format_exc())
-finally:
-    sys.stdout = _old_out
-    sys.stderr = _old_err
-
-_buf.getvalue()
-`);
-  return output || '(no output)';
-}
-
-async function _runCpp(code, stdinText) {
-  const res = await fetch('https://wandbox.org/api/compile.json', {
-    method: 'POST',
+async function _warmupCodeApi() {
+  try {
+    await fetch('/api/code/run', {
+    method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      compiler: 'gcc-head',
-      code,
-      stdin: stdinText,
-      options: 'gnu++17',
-    }),
-  });
-  if (!res.ok) throw new Error(`Compiler service error (${res.status}). Try again.`);
-  const data = await res.json();
-  const compErr = (data.compiler_error || '').trim();
-  const progOut = (data.program_output || data.program_message || '').trim();
-  if (compErr) return 'Compilation Error:\n' + compErr;
-  return progOut || '(no output)';
+      body:    JSON.stringify({ source_code: 'print(1)', language: 'python', stdin: '' }),
+    });
+  } catch {}
 }
 
 function _buildProblemDesc(problem) {
@@ -955,10 +927,8 @@ function openCodeEditor(si, ssi, pi) {
   else if (stdinEl) stdinEl.value = '';
 
   document.getElementById('code-modal').style.display = 'flex';
-  loadMonaco(() => { setupCodeEditor(si, ssi, pi, currentCodeLang); });
+  setupCodeEditor(si, ssi, pi, currentCodeLang);
 
-  // Pre-warm Python runtime in background so first Run is fast
-  if (currentCodeLang === 'python') _getPyodide().catch(() => {});
 }
 
 function _syncMarkDoneBtn(problem) {
@@ -973,19 +943,81 @@ function _syncMarkDoneBtn(problem) {
   }
 }
 
-function loadMonaco(cb) {
-  if (window._monacoLoaded) { cb(); return; }
-  if (window._monacoLoading) { const iv = setInterval(() => { if (window._monacoLoaded || window._monacoFailed) { clearInterval(iv); cb(); } }, 100); return; }
-  window._monacoLoading = true;
-  const script = document.createElement('script');
-  script.src = 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js';
-  script.onerror = () => { window._monacoFailed = true; window._monacoLoading = false; cb(); };
-  script.onload = () => {
-    require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
-    require(['vs/editor/editor.main'], () => { window._monacoLoaded = true; window._monacoLoading = false; cb(); });
-  };
-  document.head.appendChild(script);
+/* ─── Syntax highlighter ─────────────────────────────────────── */
+const _PY_KW  = new Set(['False','None','True','and','as','assert','async','await','break','class','continue','def','del','elif','else','except','finally','for','from','global','if','import','in','is','lambda','nonlocal','not','or','pass','raise','return','try','while','with','yield']);
+const _PY_BI  = new Set(['abs','all','any','bin','bool','bytes','callable','chr','dict','dir','divmod','enumerate','eval','exec','filter','float','format','frozenset','getattr','globals','hasattr','hash','help','hex','id','input','int','isinstance','issubclass','iter','len','list','locals','map','max','min','next','object','oct','open','ord','pow','print','property','range','repr','reversed','round','set','setattr','slice','sorted','staticmethod','str','sum','super','tuple','type','vars','zip']);
+const _CPP_KW = new Set(['auto','bool','break','case','catch','char','class','const','constexpr','continue','default','delete','do','double','else','enum','explicit','extern','false','float','for','friend','goto','if','inline','int','long','mutable','namespace','new','noexcept','nullptr','operator','private','protected','public','return','short','signed','sizeof','static','struct','switch','template','this','throw','true','try','typedef','typename','union','unsigned','using','virtual','void','volatile','while','override','final']);
+const _CPP_BI = new Set(['string','vector','map','unordered_map','set','unordered_set','pair','tuple','array','deque','queue','stack','priority_queue','list','shared_ptr','unique_ptr','cout','cin','cerr','endl','sort','find','lower_bound','upper_bound','min','max','swap','abs','pow','sqrt','make_pair','make_shared','make_unique','ios_base','sync_with_stdio']);
+
+function _highlight(src, lang) {
+  const isPy = lang === 'python';
+  const kw = isPy ? _PY_KW  : _CPP_KW;
+  const bi = isPy ? _PY_BI  : _CPP_BI;
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let out = '', i = 0;
+
+  while (i < src.length) {
+    const c = src[i];
+
+    // Python comment
+    if (isPy && c === '#') {
+      const e = src.indexOf('\n', i); const t = e < 0 ? src.slice(i) : src.slice(i, e);
+      out += `<span class="hl-c">${esc(t)}</span>`; i += t.length; continue;
+    }
+    // C++ line comment
+    if (!isPy && c === '/' && src[i+1] === '/') {
+      const e = src.indexOf('\n', i); const t = e < 0 ? src.slice(i) : src.slice(i, e);
+      out += `<span class="hl-c">${esc(t)}</span>`; i += t.length; continue;
+    }
+    // C++ block comment
+    if (!isPy && c === '/' && src[i+1] === '*') {
+      const e = src.indexOf('*/', i+2); const t = e < 0 ? src.slice(i) : src.slice(i, e+2);
+      out += `<span class="hl-c">${esc(t)}</span>`; i += t.length; continue;
+    }
+    // C++ preprocessor
+    if (!isPy && c === '#' && (i === 0 || src[i-1] === '\n')) {
+      const e = src.indexOf('\n', i); const t = e < 0 ? src.slice(i) : src.slice(i, e);
+      out += `<span class="hl-pp">${esc(t)}</span>`; i += t.length; continue;
+    }
+    // Python triple-quoted string
+    if (isPy && (src.slice(i,i+3) === '"""' || src.slice(i,i+3) === "'''")) {
+      const q = src.slice(i,i+3); const e = src.indexOf(q, i+3);
+      const t = e < 0 ? src.slice(i) : src.slice(i, e+3);
+      out += `<span class="hl-s">${esc(t)}</span>`; i += t.length; continue;
+    }
+    // String literal
+    if (c === '"' || c === "'") {
+      let j = i+1;
+      while (j < src.length && src[j] !== c && src[j] !== '\n') { if (src[j]==='\\') j++; j++; }
+      const t = src.slice(i, Math.min(j+1, src.length));
+      out += `<span class="hl-s">${esc(t)}</span>`; i += t.length; continue;
+    }
+    // Number
+    if (/[0-9]/.test(c) || (c==='.' && /[0-9]/.test(src[i+1]||''))) {
+      let j = i; while (j < src.length && /[0-9a-fA-FxXoObBlLeE_.]/.test(src[j])) j++;
+      out += `<span class="hl-n">${esc(src.slice(i,j))}</span>`; i = j; continue;
+    }
+    // Identifier / keyword / builtin / function call
+    if (/[a-zA-Z_]/.test(c)) {
+      let j = i; while (j < src.length && /\w/.test(src[j])) j++;
+      const w = src.slice(i, j);
+      if      (kw.has(w))         out += `<span class="hl-k">${esc(w)}</span>`;
+      else if (bi.has(w))         out += `<span class="hl-b">${esc(w)}</span>`;
+      else if (src[j] === '(')    out += `<span class="hl-f">${esc(w)}</span>`;
+      else                        out += esc(w);
+      i = j; continue;
+    }
+    // Operator
+    if (/[+\-*/%=<>!&|^~@]/.test(c)) {
+      let j = i; while (j < src.length && /[+\-*/%=<>!&|^~@]/.test(src[j])) j++;
+      out += `<span class="hl-op">${esc(src.slice(i,j))}</span>`; i = j; continue;
+    }
+    out += esc(c); i++;
+  }
+  return out;
 }
+
+/* ─── Custom code editor (overlay) ───────────────────────────── */
 
 function setupCodeEditor(si, ssi, pi, lang) {
   const problem = D.steps[si].substeps[ssi].problems[pi];
@@ -993,28 +1025,95 @@ function setupCodeEditor(si, ssi, pi, lang) {
   const code = codeStore[key] !== undefined ? codeStore[key] : starterCode(problem, lang);
   const container = document.getElementById('monaco-container');
 
-  if (window._monacoFailed || !window.monaco) {
-    container.innerHTML = `<textarea id="code-textarea" spellcheck="false" style="width:100%;height:100%;min-height:300px;font-family:var(--font-mono);font-size:13px;padding:12px;border:none;outline:none;background:var(--surface-2);color:var(--text);resize:none;">${code.replace(/</g,'&lt;')}</textarea>`;
-    return;
-  }
-  if (window._monacoEditor) { window._monacoEditor.dispose(); window._monacoEditor = null; }
-  window._monacoEditor = window.monaco.editor.create(container, {
-    value: code,
-    language: MONACO_LANG_MAP[lang] || 'python',
-    theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'vs-dark' : 'vs',
-    fontSize: 13,
-    fontFamily: "'Geist Mono', ui-monospace, monospace",
-    minimap: { enabled: false },
-    scrollBeyondLastLine: false,
-    wordWrap: 'on',
-    automaticLayout: true,
-    padding: { top: 10 },
+  container.innerHTML = `
+    <div class="editor-root">
+      <div class="editor-gutter" id="editor-gutter"></div>
+      <div class="editor-main">
+        <pre class="editor-pre" id="editor-pre" aria-hidden="true"></pre>
+        <textarea id="editor-ta" class="editor-textarea"
+          spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
+      </div>
+    </div>`;
+
+  const ta     = container.querySelector('#editor-ta');
+  const pre    = container.querySelector('#editor-pre');
+  const gutter = container.querySelector('#editor-gutter');
+
+  const refresh = () => {
+    pre.innerHTML = _highlight(ta.value, lang) + '\n';
+    const n = ta.value.split('\n').length;
+    if (parseInt(gutter.dataset.n || 0) !== n) {
+      gutter.dataset.n = n;
+      gutter.textContent = Array.from({length: n}, (_, i) => i+1).join('\n');
+    }
+  };
+
+  ta.value = code;
+  refresh();
+
+  ta.addEventListener('scroll', () => { pre.scrollTop = ta.scrollTop; pre.scrollLeft = ta.scrollLeft; gutter.scrollTop = ta.scrollTop; });
+  ta.addEventListener('input',  refresh);
+
+  const PAIRS = { '(':')', '[':']', '{':'}', '"':'"', "'":"'" };
+  const OPEN  = new Set(Object.keys(PAIRS));
+  const CLOSE = new Set(Object.values(PAIRS));
+
+  ta.addEventListener('keydown', e => {
+    const s = ta.selectionStart, end = ta.selectionEnd, v = ta.value;
+
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      if (e.shiftKey) {
+        const ls = v.lastIndexOf('\n', s-1)+1;
+        const sp = v.slice(ls).match(/^ {1,4}/);
+        if (sp) { ta.value = v.slice(0,ls)+v.slice(ls+sp[0].length); ta.selectionStart=ta.selectionEnd=Math.max(ls,s-sp[0].length); refresh(); }
+      } else {
+        ta.value = v.slice(0,s)+'    '+v.slice(end);
+        ta.selectionStart=ta.selectionEnd=s+4; refresh();
+      }
+      return;
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const ls   = v.lastIndexOf('\n', s-1)+1;
+      const line = v.slice(ls, s);
+      const ind  = line.match(/^(\s*)/)[1];
+      const xtra = /[:{([{]\s*$/.test(line.trimEnd()) ? '    ' : '';
+      const ins  = '\n' + ind + xtra;
+      ta.value = v.slice(0,s)+ins+v.slice(end);
+      ta.selectionStart=ta.selectionEnd=s+ins.length; refresh();
+      return;
+    }
+
+    if (e.key === 'Backspace' && s === end) {
+      const prev = v[s-1], next = v[s];
+      if (prev && PAIRS[prev] === next) {
+        e.preventDefault();
+        ta.value = v.slice(0,s-1)+v.slice(s+1);
+        ta.selectionStart=ta.selectionEnd=s-1; refresh();
+      }
+      return;
+    }
+
+    if (OPEN.has(e.key) && !e.ctrlKey && !e.metaKey) {
+      const cl = PAIRS[e.key];
+      if ((e.key==='"'||e.key==="'") && /\w/.test(v[end])) return;
+      e.preventDefault();
+      const sel = v.slice(s,end);
+      if (sel) { ta.value=v.slice(0,s)+e.key+sel+cl+v.slice(end); ta.selectionStart=s+1; ta.selectionEnd=end+1; }
+      else     { ta.value=v.slice(0,s)+e.key+cl+v.slice(end);     ta.selectionStart=ta.selectionEnd=s+1; }
+      refresh(); return;
+    }
+
+    if (CLOSE.has(e.key) && v[s]===e.key && s===end) {
+      e.preventDefault(); ta.selectionStart=ta.selectionEnd=s+1;
+    }
   });
 }
 
 function getEditorCode() {
-  if (window._monacoEditor) return window._monacoEditor.getValue();
-  const ta = document.getElementById('code-textarea');
+  const ta = document.getElementById('editor-ta');
   return ta ? ta.value : '';
 }
 
@@ -1031,18 +1130,12 @@ function switchCodeLang(lang) {
 async function runUserCode() {
   const btn = document.getElementById('run-code-btn');
   btn.disabled = true;
+  btn.textContent = currentCodeLang === 'cpp' ? '⏳ Compiling…' : '⏳ Running…';
   const code = getEditorCode();
   const stdin = (document.getElementById('code-stdin') || {}).value || '';
   try {
-    if (currentCodeLang === 'python') {
-      btn.textContent = _pyodideReady ? '⏳ Running…' : '⏳ Loading Python (first run)…';
-      const out = await _runPython(code, stdin);
-      showCodeOutput(out.trim());
-    } else if (currentCodeLang === 'cpp') {
-      btn.textContent = '⏳ Compiling…';
-      const out = await _runCpp(code, stdin);
-      showCodeOutput(out.trim());
-    }
+    const out = await _runCode(currentCodeLang, code, stdin);
+    showCodeOutput(out.trim());
   } catch(e) {
     showCodeOutput('Error: ' + e.message);
   } finally {
@@ -1900,6 +1993,7 @@ function initApp() {
   }
 
   D = load();
+  _warmupCompiler();
 
   if (currentUser) {
     const nameEl = document.getElementById('user-display-name');
@@ -1931,6 +2025,11 @@ function initApp() {
   }
 }
 
+/* ─── Compiler warm-up ────────────────────────────────────────── */
+function _warmupCompiler() {
+  _warmupCodeApi();
+}
+
 /* ─── Logout ─────────────────────────────────────────────────── */
 async function doLogout() {
   try { await fetch('/api/auth/logout', { cache: 'no-store' }); } catch {}
@@ -1941,6 +2040,45 @@ async function doLogout() {
   currentUser = null;
   location.replace('/');
 }
+
+Object.assign(window, {
+  backToStep,
+  backToSteps,
+  careerAnalyze,
+  careerClearFile,
+  careerCopyLatex,
+  careerDownloadLatex,
+  careerFindJobs,
+  careerHandleDrop,
+  careerHandleFileSelect,
+  careerScan,
+  careerSelectRole,
+  careerSetResumeMode,
+  careerUpgrade,
+  closeCodeModal,
+  closeModal,
+  deleteApp,
+  doLogout,
+  editApp,
+  hideLanding,
+  markCodeProblemDone,
+  openAppModal,
+  openCodeEditor,
+  openStep,
+  openSubstep,
+  runUserCode,
+  saveApp,
+  saveDailyNote,
+  saveNote,
+  switchCodeLang,
+  switchTab,
+  toggleDayNote,
+  toggleNote,
+  toggleProblem,
+  toggleTask,
+  toggleTheme,
+  updateCGPA,
+});
 
 /* ─── Boot ──────────────────────────────────────────────────── */
 applyThemeIcon();

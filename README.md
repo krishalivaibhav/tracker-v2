@@ -14,7 +14,7 @@ Your personal DSA & placement companion — track every problem, every applicati
 
 ## Stack
 
-- Vanilla JS + CSS (no framework)
+- Vite + React migration in progress. React owns the app shell; feature screens are being converted from legacy DOM rendering one by one.
 - Node.js serverless functions on Vercel
 - Google OAuth for auth
 - Groq (llama-3.3-70b-versatile) for AI features
@@ -25,7 +25,8 @@ Your personal DSA & placement companion — track every problem, every applicati
 ```bash
 cp .env.local.example .env.local   # fill in your keys
 npm install
-vercel dev
+npm run dev      # frontend only
+vercel dev       # frontend + serverless API routes
 ```
 
 Required env vars: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`, `GROQ_API_KEY`, `GROQ_MODEL`, `APP_URL`
