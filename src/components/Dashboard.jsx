@@ -1,12 +1,11 @@
 import { lcStats, lcLinkedSolved, computeStreak, lastSolvedDate, stepSolved, stepProblems } from '../utils/stats.js';
-import { daysUntil, fmtDate } from '../utils/helpers.js';
-import { LC_TOTAL, PLACEMENT_DATE } from '../utils/storage.js';
+import { fmtDate } from '../utils/helpers.js';
+import { LC_TOTAL } from '../utils/storage.js';
 
 export default function Dashboard({ data, user, onTabChange, onOpenRevisionProblem }) {
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const stats = lcStats(data.steps);
-  const days = daysUntil(PLACEMENT_DATE);
   const pct = (stats.total / LC_TOTAL * 100).toFixed(0);
   const streak = computeStreak(data.steps);
   const lastSolved = lastSolvedDate(data.steps);
@@ -43,7 +42,7 @@ export default function Dashboard({ data, user, onTabChange, onOpenRevisionProbl
       <div className="page-header pop-in">
         <div>
           <h1 className="page-title">{greet}, <em>{user?.name?.split(' ')[0] || 'there'}</em>.</h1>
-          <p className="page-sub">{days} days to placement season · {stats.total}/{LC_TOTAL} problems solved</p>
+          <p className="page-sub">{stats.total}/{LC_TOTAL} problems solved</p>
         </div>
       </div>
 
