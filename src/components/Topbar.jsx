@@ -3,9 +3,13 @@ import { computeStreak } from '../utils/stats.js';
 
 const TAB_LABELS = { dashboard: 'Dashboard', leetcode: 'DSA Sheet', career: 'Career Tools' };
 
-export default function Topbar({ activeTab, steps, theme, onToggleTheme }) {
+export default function Topbar({ activeTab, steps, theme, onToggleTheme, user, onLogout }) {
   const streak = computeStreak(steps);
   const isDark = theme === 'dark';
+
+  const initials = user
+    ? (() => { const p = user.name.split(' '); return (p[0][0] + (p[1]?.[0] || '')).toUpperCase(); })()
+    : null;
 
   return (
     <header className="topbar">
@@ -26,6 +30,17 @@ export default function Topbar({ activeTab, steps, theme, onToggleTheme }) {
           }
         </svg>
       </button>
+      {user && (
+        <button className="topbar-signout" onClick={onLogout} title="Sign out">
+          {user.avatar
+            ? <img src={user.avatar} alt="" style={{ width: '26px', height: '26px', borderRadius: '50%', objectFit: 'cover' }} />
+            : <span className="topbar-avatar">{initials}</span>
+          }
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" width="12" height="12" style={{ flexShrink: 0 }}>
+            <path d="M5 1H2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3M9 10l3-3-3-3M12 7H5"/>
+          </svg>
+        </button>
+      )}
     </header>
   );
 }

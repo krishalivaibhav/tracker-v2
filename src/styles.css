@@ -800,6 +800,24 @@ select option { background: var(--surface-2); }
   margin: 0; white-space: pre-wrap; word-break: break-all; color: var(--text);
 }
 
+/* ── Topbar sign-out (mobile only) ─────────────────────────── */
+.topbar-signout {
+  display: none;
+  align-items: center; gap: 5px;
+  background: transparent; border: 1px solid var(--border); border-radius: 20px;
+  padding: 3px 8px 3px 4px; cursor: pointer; color: var(--text-faint);
+  font-size: 11px; font-family: var(--font-sans); transition: color var(--dur-fast);
+}
+.topbar-signout:hover { color: var(--text); }
+.topbar-avatar {
+  width: 22px; height: 22px; border-radius: 50%; background: var(--accent-soft);
+  color: var(--accent); font-size: 9px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+@media (max-width: 900px) {
+  .topbar-signout { display: flex; }
+}
+
 /* ── Mobile bottom nav ─────────────────────────────────────── */
 .mobile-nav {
   display: none;

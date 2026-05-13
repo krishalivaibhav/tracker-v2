@@ -12,12 +12,20 @@ export default function Dashboard({ data, user, onTabChange }) {
   const lastSolved = lastSolvedDate(data.steps);
 
   const revisionProblems = [];
+  const timeBuckets = { E: [], M: [], H: [] };
   for (const step of data.steps) {
     for (const ss of step.substeps) {
       for (const p of ss.problems) {
         if (p.revision) revisionProblems.push({ p, step, ss });
+        if (p.lastTime > 0 && p.d) timeBuckets[p.d]?.push(p.lastTime);
       }
     }
+  }
+  const hasTimeData = Object.values(timeBuckets).some(a => a.length > 0);
+  function avgTime(arr) {
+    if (!arr.length) return null;
+    const s = Math.round(arr.reduce((a,b) => a+b, 0) / arr.length);
+    return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
   }
 
   const milestones = [
@@ -64,6 +72,26 @@ export default function Dashboard({ data, user, onTabChange }) {
           <div className="stat-val" style={{ color: '#F97316' }}>{lcLinkedSolved(data.steps)}<sup>/{LC_TOTAL}</sup></div>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '12px' }}>LC-linked solved</div>
         </div>
+        {hasTimeData && (
+          <div className="card tight">
+            <div className="card-title">Avg Time</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+              {[['E','Easy','var(--easy)'],['M','Med','var(--med)'],['H','Hard','var(--hard)']].map(([key,label,color]) => {
+                const t = avgTime(timeBuckets[key]);
+                if (!t) return null;
+                return (
+                  <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                    <span style={{ color }}>{label}</span>
+                    <span style={{ color: 'var(--text)', fontVariantNumeric: 'tabular-nums' }}>{t}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ fontSize: '10.5px', color: 'var(--text-faint)', marginTop: '10px' }}>
+              {Object.values(timeBuckets).flat().length} sessions recorded
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="pop-in d1">

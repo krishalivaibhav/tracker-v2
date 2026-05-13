@@ -90,7 +90,7 @@ export default function SubstepDetail({ data, stepIdx, substepIdx, onBackToSteps
       <div className="card substep-table-wrap" style={{ padding: 0, overflow: 'hidden' }}>
         <table className="ptable">
           <thead>
-            <tr><th style={{ width: '38px' }}></th><th style={{ width: '40px' }}>#</th><th>Problem</th><th style={{ width: '90px' }}>Difficulty</th><th style={{ width: '32px' }}></th><th style={{ width: '32px' }}></th></tr>
+            <tr><th style={{ width: '38px' }}></th><th style={{ width: '40px' }}>#</th><th>Problem</th><th style={{ width: '90px' }}>Difficulty</th><th style={{ width: '56px' }}></th></tr>
           </thead>
           <tbody>
             {ss.problems.map((p, pi) => {
@@ -125,33 +125,40 @@ export default function SubstepDetail({ data, stepIdx, substepIdx, onBackToSteps
                     <td className="num">{pi+1}.</td>
                     <td>
                       {nameCell}
-                      {p.note && (
-                        <div style={{ fontSize: '11px', color: 'var(--text-faint)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '360px' }}>
-                          {p.note}
-                        </div>
-                      )}
+                      <div style={{ display: 'flex', gap: '10px', marginTop: '2px' }}>
+                        {p.note && (
+                          <div style={{ fontSize: '11px', color: 'var(--text-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '280px' }}>
+                            {p.note}
+                          </div>
+                        )}
+                        {p.lastTime > 0 && (
+                          <div style={{ fontSize: '11px', color: 'var(--text-faint)', flexShrink: 0 }}>
+                            ⏱ {Math.floor(p.lastTime/60)}:{String(p.lastTime%60).padStart(2,'0')}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td><DiffBadge d={p.d} /></td>
-                    <td style={{ width: '32px' }}>
-                      <button className={`btn-note ${hasNote ? 'has-note' : ''}`}
-                        onClick={() => toggleNote(pi)}
-                        title={hasNote ? 'Edit note' : 'Add note'}>
-                        {PENCIL_SVG}
-                      </button>
-                    </td>
-                    <td style={{ width: '32px' }}>
-                      <button
-                        className={`btn-note ${p.revision ? 'has-note' : ''}`}
-                        onClick={() => onToggleRevision(stepIdx, substepIdx, pi)}
-                        title={p.revision ? 'Remove from revision' : 'Mark for revision'}
-                        style={p.revision ? { color: 'var(--med)' } : {}}>
-                        {REVISION_SVG}
-                      </button>
+                    <td style={{ width: '56px' }}>
+                      <div style={{ display: 'flex', gap: '2px' }}>
+                        <button className={`btn-note ${hasNote ? 'has-note' : ''}`}
+                          onClick={() => toggleNote(pi)}
+                          title={hasNote ? 'Edit note' : 'Add note'}>
+                          {PENCIL_SVG}
+                        </button>
+                        <button
+                          className={`btn-note ${p.revision ? 'has-note' : ''}`}
+                          onClick={() => onToggleRevision(stepIdx, substepIdx, pi)}
+                          title={p.revision ? 'Remove from revision' : 'Mark for revision'}
+                          style={p.revision ? { color: 'var(--med)' } : {}}>
+                          {REVISION_SVG}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   {noteOpen && (
                     <tr key={`note-${pi}`} className="note-row">
-                      <td colSpan="6" className="note-row">
+                      <td colSpan="5" className="note-row">
                         <textarea
                           className="note-input"
                           placeholder="Your notes, approach, key insight, edge cases..."

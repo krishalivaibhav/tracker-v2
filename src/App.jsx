@@ -258,6 +258,8 @@ export default function App() {
             steps={data.steps}
             theme={theme}
             onToggleTheme={toggleTheme}
+            user={user}
+            onLogout={handleLogout}
           />
           <main className="content" id="content-area">
             {activeTab === 'dashboard' && (
