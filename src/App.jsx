@@ -139,7 +139,6 @@ export default function App() {
 
   async function handleLogout() {
     try { await fetch('/api/auth/logout', { cache: 'no-store' }); } catch {}
-    if (user) localStorage.removeItem(`vk_a2z_v1_${user.id}`);
     localStorage.removeItem('vk_active_tab');
     location.replace('/');
   }
