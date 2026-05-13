@@ -838,12 +838,13 @@ select option { background: var(--surface-2); }
   .grid-3     { grid-template-columns: repeat(2, 1fr); }
   .grid-4     { grid-template-columns: repeat(2, 1fr); }
 
-  /* Code modal */
-  .code-modal-body { grid-template-columns: 1fr; }
-  .code-modal-desc {
-    border-right: none; border-bottom: 1px solid var(--border); max-height: 200px;
-  }
+  /* Code modal — full screen on mobile, panel-toggle-driven */
   .code-modal { width: 100%; height: 100%; border-radius: 0; }
+  .code-modal-body { grid-template-columns: 1fr; }
+  .code-modal-desc { border-right: none; border-bottom: none; max-height: none; flex: 1; }
+  .code-modal-desc.mobile-hidden,
+  .code-modal-editor-wrap.mobile-hidden { display: none; }
+  .mobile-panel-toggle { display: flex; }
 
   /* Page padding */
   .page-header { margin-bottom: 16px; }
@@ -1473,4 +1474,97 @@ select option { background: var(--surface-2); }
   .compare-pane { height: 400px; }
   .compare-pane-upgraded { border-left: none; border-top: 1px solid var(--border); }
   .landing-nav { padding: 16px 20px; }
+}
+
+/* ============================
+   Test cases panel
+   ============================ */
+
+.test-cases-wrap {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.test-cases-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.test-tab {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 11.5px; font-weight: 600; font-family: var(--font-sans);
+  border: 1px solid var(--border); background: var(--surface-2);
+  color: var(--text-muted); cursor: pointer;
+  transition: border-color var(--dur-fast), background var(--dur-fast), color var(--dur-fast);
+}
+.test-tab:hover { border-color: var(--border-strong); color: var(--text); }
+.test-tab.active { background: var(--surface-3); border-color: var(--accent); color: var(--text); }
+.test-tab.tc-pass  { border-color: var(--easy);   color: var(--easy); }
+.test-tab.tc-fail  { border-color: var(--hard);   color: var(--hard); }
+.test-tab.tc-error { border-color: var(--medium); color: var(--medium); }
+
+.tc-icon { font-size: 10px; font-weight: 700; }
+.pass-icon { color: var(--easy); }
+.fail-icon { color: var(--hard); }
+.err-icon  { color: var(--medium); }
+
+.test-tab-add {
+  padding: 3px 9px; border-radius: 20px;
+  font-size: 14px; font-weight: 600; font-family: var(--font-sans);
+  border: 1px dashed var(--border); background: transparent;
+  color: var(--text-muted); cursor: pointer;
+  transition: border-color var(--dur-fast), color var(--dur-fast);
+}
+.test-tab-add:hover { border-color: var(--accent); color: var(--accent); }
+
+.test-io-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.verdict-wrap {
+  display: flex; flex-direction: column; gap: 6px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: 8px 12px;
+}
+.verdict-wrap.tc-pass  { border-color: var(--easy);   background: color-mix(in srgb, var(--easy) 8%, transparent); }
+.verdict-wrap.tc-fail  { border-color: var(--hard);   background: color-mix(in srgb, var(--hard) 8%, transparent); }
+.verdict-wrap.tc-error { border-color: var(--medium); background: color-mix(in srgb, var(--medium) 8%, transparent); }
+
+.verdict-badge {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+}
+.tc-pass  .verdict-badge { color: var(--easy); }
+.tc-fail  .verdict-badge { color: var(--hard); }
+.tc-error .verdict-badge { color: var(--medium); }
+.tc-run   .verdict-badge { color: var(--text-muted); }
+
+.verdict-pre {
+  font-family: var(--font-mono); font-size: 12px;
+  margin: 0; white-space: pre-wrap; word-break: break-all; color: var(--text);
+}
+
+/* Mobile panel toggle (hidden on desktop) */
+.mobile-panel-toggle { display: none; }
+.mpanel-btn {
+  padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
+  font-family: var(--font-sans); border: 1px solid var(--border);
+  background: transparent; color: var(--text-muted); cursor: pointer;
+  transition: all var(--dur-fast);
+}
+.mpanel-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+@media (max-width: 900px) {
+  .test-io-grid { grid-template-columns: 1fr; }
+  .code-modal-toolbar { flex-wrap: wrap; }
+  /* Problem list overflow on narrow screens */
+  .substep-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }

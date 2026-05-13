@@ -81,7 +81,7 @@ export default function SubstepDetail({ data, stepIdx, substepIdx, onBackToSteps
         </div>
       </div>
 
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="card substep-table-wrap" style={{ padding: 0, overflow: 'hidden' }}>
         <table className="ptable">
           <thead>
             <tr><th style={{ width: '38px' }}></th><th style={{ width: '40px' }}>#</th><th>Problem</th><th style={{ width: '90px' }}>Difficulty</th><th style={{ width: '32px' }}></th></tr>
