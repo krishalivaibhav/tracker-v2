@@ -211,16 +211,51 @@ function renderNav() {
   });
 }
 
+/* ─── Hash routing ───────────────────────────────────────────── */
+function _pushHash(hash) {
+  history.pushState(null, '', hash);
+}
+
+function _applyHash() {
+  const raw = location.hash.slice(1);
+  if (!raw) return;
+  const [seg, stepStr, ssStr] = raw.split('/');
+  const tab = seg === 'dsa' ? 'leetcode' : (seg || null);
+  if (!tab) return;
+  activeTab = tab;
+  localStorage.setItem('vk_active_tab', tab);
+  document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('tab-' + tab);
+  if (!el) return;
+  el.classList.add('active');
+  if (tab === 'leetcode' && stepStr !== undefined) {
+    selectedStep = parseInt(stepStr, 10);
+    selectedSubstep = ssStr !== undefined ? parseInt(ssStr, 10) : null;
+  } else {
+    selectedStep = null;
+    selectedSubstep = null;
+  }
+  renderNav();
+  renderSection(tab);
+  document.getElementById('content-area').scrollTop = 0;
+}
+
+window.addEventListener('hashchange', () => {
+  if (document.querySelector('.app').style.display !== 'none') _applyHash();
+});
+
 function switchTab(id) {
   if (id === 'home') { showLanding(); return; }
   activeTab = id;
   localStorage.setItem('vk_active_tab', id);
+  selectedStep = null;
+  selectedSubstep = null;
   document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
-  if (id !== 'leetcode') { selectedStep = null; selectedSubstep = null; }
   renderNav();
   renderSection(id);
   document.getElementById('content-area').scrollTop = 0;
+  _pushHash('#' + (id === 'leetcode' ? 'dsa' : id));
 }
 
 function renderSection(id) {
@@ -420,6 +455,7 @@ function openStep(si) {
   selectedSubstep = null;
   renderStepDetail();
   document.getElementById('content-area').scrollTop = 0;
+  _pushHash(`#dsa/${si}`);
 }
 
 function renderStepDetail() {
@@ -463,6 +499,7 @@ function backToSteps() {
   selectedSubstep = null;
   renderStepGrid();
   document.getElementById('content-area').scrollTop = 0;
+  _pushHash('#dsa');
 }
 
 /* Level 3: Sub-step detail (problem table) */
@@ -471,12 +508,14 @@ function openSubstep(si, ssi) {
   selectedSubstep = ssi;
   renderSubstepDetail();
   document.getElementById('content-area').scrollTop = 0;
+  _pushHash(`#dsa/${si}/${ssi}`);
 }
 
 function backToStep() {
   selectedSubstep = null;
   renderStepDetail();
   document.getElementById('content-area').scrollTop = 0;
+  _pushHash(`#dsa/${selectedStep}`);
 }
 
 const PENCIL_SVG = `<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M9 1.5l3 3-7.5 7.5H1v-3.5L9 1.5zM8 2.5l3 3"/></svg>`;
@@ -747,7 +786,9 @@ function _getPyodide() {
 
 function _getJSCPP() {
   if (!_jscppReady) {
-    _jscppReady = _loadScript('https://cdn.jsdelivr.net/npm/JSCPP@2.1.2/dist/JSCPP.es5.min.js');
+    const primary  = 'https://cdn.jsdelivr.net/npm/JSCPP@2.1.2/dist/JSCPP.es5.min.js';
+    const fallback = 'https://unpkg.com/JSCPP@2.1.2/dist/JSCPP.es5.min.js';
+    _jscppReady = _loadScript(primary).catch(() => _loadScript(fallback));
   }
   return _jscppReady;
 }
@@ -1888,13 +1929,31 @@ function initApp() {
     if (logoutBtn) logoutBtn.style.display = 'flex';
   }
 
-  activeTab = localStorage.getItem('vk_active_tab') || 'dashboard';
-  document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
-  document.getElementById('tab-' + activeTab).classList.add('active');
-  renderNav();
-  renderSection(activeTab);
+  if (location.hash && location.hash.length > 1) {
+    _applyHash();
+  } else {
+    activeTab = localStorage.getItem('vk_active_tab') || 'dashboard';
+    document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+    document.getElementById('tab-' + activeTab).classList.add('active');
+    renderNav();
+    renderSection(activeTab);
+  }
+}
+
+/* ─── Logout ─────────────────────────────────────────────────── */
+async function doLogout() {
+  try { await fetch('/api/auth/logout', { cache: 'no-store' }); } catch {}
+  if (currentUser) {
+    localStorage.removeItem(`vk_a2z_v1_${currentUser.id}`);
+  }
+  localStorage.removeItem('vk_active_tab');
+  currentUser = null;
+  location.replace('/');
 }
 
 /* ─── Boot ──────────────────────────────────────────────────── */
 applyThemeIcon();
 initAuth();
+
+// Restore auth check if page is restored from bfcache (browser back after logout)
+window.addEventListener('pageshow', e => { if (e.persisted) initAuth(); });
