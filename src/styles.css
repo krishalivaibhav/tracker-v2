@@ -372,6 +372,13 @@ input, select, textarea { font-family: inherit; }
 }
 .ptable tr.row:hover td { background: var(--surface-2); }
 .ptable tr:last-child td { border-bottom: none; }
+@keyframes row-flash {
+  0%   { background: transparent; }
+  20%  { background: var(--accent-soft); }
+  60%  { background: var(--accent-soft); }
+  100% { background: transparent; }
+}
+.ptable tr.row-flash td { animation: row-flash 1.6s ease forwards; }
 .ptable .num { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
 
 .platform-logo { width: 20px; height: 20px; object-fit: contain; margin-left: 8px; vertical-align: -4px; flex-shrink: 0; }

@@ -3,7 +3,7 @@ import StepDetail from './StepDetail.jsx';
 import SubstepDetail from './SubstepDetail.jsx';
 
 export default function DSASheet({
-  data, selectedStep, selectedSubstep,
+  data, selectedStep, selectedSubstep, highlightPi,
   onStepClick, onSubstepClick, onBackToSteps, onBackToStep, onOpenSubstep,
   onToggleProblem, onToggleRevision, onSaveNote, onDailyNoteSave, onOpenCodeEditor,
 }) {
@@ -13,6 +13,7 @@ export default function DSASheet({
         data={data}
         stepIdx={selectedStep}
         substepIdx={selectedSubstep}
+        highlightPi={highlightPi}
         onBackToSteps={onBackToSteps}
         onBackToStep={onBackToStep}
         onOpenSubstep={onOpenSubstep}

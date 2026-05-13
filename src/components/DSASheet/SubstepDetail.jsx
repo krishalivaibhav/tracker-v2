@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { substepSolved } from '../../utils/stats.js';
 import { today } from '../../utils/helpers.js';
 
@@ -20,7 +20,7 @@ const REVISION_SVG = (
   </svg>
 );
 
-export default function SubstepDetail({ data, stepIdx, substepIdx, onBackToSteps, onBackToStep, onOpenSubstep, onToggleProblem, onToggleRevision, onSaveNote, onOpenCodeEditor }) {
+export default function SubstepDetail({ data, stepIdx, substepIdx, highlightPi, onBackToSteps, onBackToStep, onOpenSubstep, onToggleProblem, onToggleRevision, onSaveNote, onOpenCodeEditor }) {
   const step = data.steps[stepIdx];
   const ss   = step.substeps[substepIdx];
   const solved = substepSolved(ss);
@@ -35,6 +35,12 @@ export default function SubstepDetail({ data, stepIdx, substepIdx, onBackToSteps
     ss.problems.forEach((p, pi) => { if (p.note) vals[pi] = p.note; });
     return vals;
   });
+
+  const highlightRef = useRef(null);
+  useEffect(() => {
+    if (highlightPi == null || !highlightRef.current) return;
+    highlightRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [highlightPi]);
 
   function toggleNote(pi) {
     setOpenNotes(prev => ({ ...prev, [pi]: !prev[pi] }));
@@ -90,7 +96,7 @@ export default function SubstepDetail({ data, stepIdx, substepIdx, onBackToSteps
       <div className="card substep-table-wrap" style={{ padding: 0, overflow: 'hidden' }}>
         <table className="ptable">
           <thead>
-            <tr><th style={{ width: '38px' }}></th><th style={{ width: '40px' }}>#</th><th>Problem</th><th style={{ width: '90px' }}>Difficulty</th><th style={{ width: '56px' }}></th></tr>
+            <tr><th style={{ width: '38px' }}></th><th style={{ width: '40px' }}>#</th><th>Problem</th><th style={{ width: '90px' }}>Difficulty</th><th style={{ width: '26px' }}></th></tr>
           </thead>
           <tbody>
             {ss.problems.map((p, pi) => {
@@ -117,7 +123,7 @@ export default function SubstepDetail({ data, stepIdx, substepIdx, onBackToSteps
 
               return (
                 <>
-                  <tr key={`prob-${pi}`} className="row">
+                  <tr key={`prob-${pi}`} ref={pi === highlightPi ? highlightRef : null} className={`row${pi === highlightPi ? ' row-flash' : ''}`}>
                     <td style={{ width: '38px' }}>
                       <input type="checkbox" className="prob-cb" checked={!!p.done}
                         onChange={e => onToggleProblem(stepIdx, substepIdx, pi, e.target.checked)} />
@@ -139,8 +145,8 @@ export default function SubstepDetail({ data, stepIdx, substepIdx, onBackToSteps
                       </div>
                     </td>
                     <td><DiffBadge d={p.d} /></td>
-                    <td style={{ width: '56px' }}>
-                      <div style={{ display: 'flex', gap: '2px' }}>
+                    <td style={{ width: '26px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
                         <button className={`btn-note ${hasNote ? 'has-note' : ''}`}
                           onClick={() => toggleNote(pi)}
                           title={hasNote ? 'Edit note' : 'Add note'}>

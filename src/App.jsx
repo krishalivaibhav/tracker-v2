@@ -23,6 +23,7 @@ export default function App() {
   const [codeLang,      setCodeLang]      = useState('python');
   const [codeStore,     setCodeStore]     = useState({});
   const [appModal,      setAppModal]      = useState(null);   // null|{mode,id}
+  const [highlightPi,   setHighlightPi]   = useState(null);  // briefly flash a problem row
   const [theme,         setTheme]         = useState(() => localStorage.getItem('vk_theme') || 'dark');
 
   const storeKey = user ? `vk_a2z_v1_${user.id}` : 'vk_a2z_v1';
@@ -144,12 +145,14 @@ export default function App() {
   }
 
   // ─── DSA handlers ───────────────────────────────────────────────────
-  function openRevisionProblem(si, ssi) {
+  function openRevisionProblem(si, ssi, pi) {
     setActiveTab('leetcode');
     localStorage.setItem('vk_active_tab', 'leetcode');
     setSelectedStep(si);
     setSelectedSub(ssi);
+    setHighlightPi(pi);
     history.pushState(null, '', `#dsa/${si}/${ssi}`);
+    setTimeout(() => setHighlightPi(null), 1800);
   }
 
   function openStep(si) {
@@ -287,6 +290,7 @@ export default function App() {
                 data={data}
                 selectedStep={selectedStep}
                 selectedSubstep={selectedSub}
+                highlightPi={highlightPi}
                 onStepClick={openStep}
                 onSubstepClick={openSubstep}
                 onBackToSteps={backToSteps}

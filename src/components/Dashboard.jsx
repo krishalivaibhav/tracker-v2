@@ -15,8 +15,8 @@ export default function Dashboard({ data, user, onTabChange, onOpenRevisionProbl
   const timeBuckets = { E: [], M: [], H: [] };
   data.steps.forEach((step, si) => {
     step.substeps.forEach((ss, ssi) => {
-      ss.problems.forEach(p => {
-        if (p.revision) revisionProblems.push({ p, step, ss, si, ssi });
+      ss.problems.forEach((p, pi) => {
+        if (p.revision) revisionProblems.push({ p, step, ss, si, ssi, pi });
         if (p.lastTime > 0 && p.d) timeBuckets[p.d]?.push(p.lastTime);
       });
     });
@@ -127,8 +127,8 @@ export default function Dashboard({ data, user, onTabChange, onOpenRevisionProbl
             <button className="btn btn-sm btn-ghost" onClick={() => onTabChange('leetcode')}>go to DSA →</button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
-            {revisionProblems.map(({ p, step, ss, si, ssi }, i) => (
-              <button key={i} onClick={() => onOpenRevisionProblem(si, ssi)}
+            {revisionProblems.map(({ p, step, ss, si, ssi, pi }, i) => (
+              <button key={i} onClick={() => onOpenRevisionProblem(si, ssi, pi)}
                 style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', background: 'var(--surface-2)', borderRadius: '8px', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'background var(--dur-fast)' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-3)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-2)'}>
