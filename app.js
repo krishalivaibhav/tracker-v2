@@ -755,10 +755,9 @@ function starterCode(problem, lang) {
   return '# your solution here\n';
 }
 
-/* ─── In-browser runtimes (no external API) ─────────────────── */
+/* ─── Runtimes ───────────────────────────────────────────────── */
 
 let _pyodideReady = null;
-let _jscppReady = null;
 
 function _loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -784,14 +783,6 @@ function _getPyodide() {
   return _pyodideReady;
 }
 
-function _getJSCPP() {
-  if (!_jscppReady) {
-    const primary  = 'https://cdn.jsdelivr.net/npm/JSCPP@2.1.2/dist/JSCPP.es5.min.js';
-    const fallback = 'https://unpkg.com/JSCPP@2.1.2/dist/JSCPP.es5.min.js';
-    _jscppReady = _loadScript(primary).catch(() => _loadScript(fallback));
-  }
-  return _jscppReady;
-}
 
 async function _runPython(code, stdinText) {
   const py = await _getPyodide();
@@ -826,21 +817,23 @@ _buf.getvalue()
   return output || '(no output)';
 }
 
-function _runCpp(code, stdinText) {
-  return new Promise(resolve => {
-    let out = '';
-    try {
-      JSCPP.run(code, stdinText, {
-        stdio: { write: s => { out += s; } },
-        maxTimeout: 8000,
-      });
-      resolve(out || '(no output)');
-    } catch(e) {
-      // JSCPP often throws objects not Errors
-      const msg = (e && e.message) ? e.message : (e && e.msg) ? e.msg : String(e);
-      resolve('Runtime Error:\n' + msg);
-    }
+async function _runCpp(code, stdinText) {
+  const res = await fetch('https://wandbox.org/api/compile.json', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      compiler: 'gcc-head',
+      code,
+      stdin: stdinText,
+      options: 'gnu++17',
+    }),
   });
+  if (!res.ok) throw new Error(`Compiler service error (${res.status}). Try again.`);
+  const data = await res.json();
+  const compErr = (data.compiler_error || '').trim();
+  const progOut = (data.program_output || data.program_message || '').trim();
+  if (compErr) return 'Compilation Error:\n' + compErr;
+  return progOut || '(no output)';
 }
 
 function _buildProblemDesc(problem) {
@@ -964,9 +957,8 @@ function openCodeEditor(si, ssi, pi) {
   document.getElementById('code-modal').style.display = 'flex';
   loadMonaco(() => { setupCodeEditor(si, ssi, pi, currentCodeLang); });
 
-  // Pre-warm runtimes in background so first Run is fast
+  // Pre-warm Python runtime in background so first Run is fast
   if (currentCodeLang === 'python') _getPyodide().catch(() => {});
-  else _getJSCPP().catch(() => {});
 }
 
 function _syncMarkDoneBtn(problem) {
@@ -1047,8 +1039,7 @@ async function runUserCode() {
       const out = await _runPython(code, stdin);
       showCodeOutput(out.trim());
     } else if (currentCodeLang === 'cpp') {
-      btn.textContent = _jscppReady ? '⏳ Running…' : '⏳ Loading C++ runtime…';
-      await _getJSCPP();
+      btn.textContent = '⏳ Compiling…';
       const out = await _runCpp(code, stdin);
       showCodeOutput(out.trim());
     }
