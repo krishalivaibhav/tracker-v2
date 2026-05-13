@@ -5,7 +5,7 @@ import SubstepDetail from './SubstepDetail.jsx';
 export default function DSASheet({
   data, selectedStep, selectedSubstep,
   onStepClick, onSubstepClick, onBackToSteps, onBackToStep, onOpenSubstep,
-  onToggleProblem, onSaveNote, onDailyNoteSave, onOpenCodeEditor,
+  onToggleProblem, onToggleRevision, onSaveNote, onDailyNoteSave, onOpenCodeEditor,
 }) {
   if (selectedStep !== null && selectedSubstep !== null) {
     return (
@@ -17,6 +17,7 @@ export default function DSASheet({
         onBackToStep={onBackToStep}
         onOpenSubstep={onOpenSubstep}
         onToggleProblem={onToggleProblem}
+        onToggleRevision={onToggleRevision}
         onSaveNote={onSaveNote}
         onOpenCodeEditor={onOpenCodeEditor}
       />

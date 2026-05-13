@@ -29,6 +29,15 @@ export default function CodeEditorModal({ data, context, lang, codeStore, onClos
   const [running,     setRunning]     = useState(false);
   const [descHtml,    setDescHtml]    = useState(() => buildProblemDesc(problem));
   const [mobilePanel, setMobilePanel] = useState('code');
+  const [elapsed,     setElapsed]     = useState(0);
+  const timerRef = useRef(null);
+  const startRef = useRef(Date.now());
+
+  // Stopwatch
+  useEffect(() => {
+    timerRef.current = setInterval(() => setElapsed(Math.floor((Date.now() - startRef.current) / 1000)), 1000);
+    return () => clearInterval(timerRef.current);
+  }, []);
 
   // Clear results when language changes (old output no longer valid)
   useEffect(() => {
@@ -146,7 +155,8 @@ export default function CodeEditorModal({ data, context, lang, codeStore, onClos
   }, [lang]);
 
   function getCurrentCode() { return taRef.current?.value || ''; }
-  function handleClose()    { onClose(getCurrentCode()); }
+  function fmtTime(s) { const m = Math.floor(s/60); return `${m}:${String(s%60).padStart(2,'0')}`; }
+  function handleClose()    { onClose(getCurrentCode(), elapsed); }
   function handleLangChange(newLang) { onLangChange(newLang, getCurrentCode()); }
 
   function updateCase(i, field, val) {
@@ -229,6 +239,9 @@ export default function CodeEditorModal({ data, context, lang, codeStore, onClos
               <button className="btn btn-primary btn-sm" onClick={handleRun} disabled={running}>
                 {running ? (['cpp','c','java'].includes(lang) ? '⏳ Compiling…' : '⏳ Running…') : '▶ Run'}
               </button>
+              <span style={{ fontSize: '11px', color: 'var(--text-faint)', fontVariantNumeric: 'tabular-nums', minWidth: '36px' }}>
+                ⏱ {fmtTime(elapsed)}
+              </span>
               {problem.lc && (
                 <a href={`https://leetcode.com/problems/${problem.lc}/`} target="_blank" rel="noopener noreferrer" className="btn btn-sm">LC ↗</a>
               )}

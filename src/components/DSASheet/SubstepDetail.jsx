@@ -14,7 +14,13 @@ const PENCIL_SVG = (
   </svg>
 );
 
-export default function SubstepDetail({ data, stepIdx, substepIdx, onBackToSteps, onBackToStep, onOpenSubstep, onToggleProblem, onSaveNote, onOpenCodeEditor }) {
+const REVISION_SVG = (
+  <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" width="13" height="13">
+    <path d="M11.5 7A4.5 4.5 0 1 1 7 2.5M11.5 2.5v3h-3"/>
+  </svg>
+);
+
+export default function SubstepDetail({ data, stepIdx, substepIdx, onBackToSteps, onBackToStep, onOpenSubstep, onToggleProblem, onToggleRevision, onSaveNote, onOpenCodeEditor }) {
   const step = data.steps[stepIdx];
   const ss   = step.substeps[substepIdx];
   const solved = substepSolved(ss);
@@ -84,7 +90,7 @@ export default function SubstepDetail({ data, stepIdx, substepIdx, onBackToSteps
       <div className="card substep-table-wrap" style={{ padding: 0, overflow: 'hidden' }}>
         <table className="ptable">
           <thead>
-            <tr><th style={{ width: '38px' }}></th><th style={{ width: '40px' }}>#</th><th>Problem</th><th style={{ width: '90px' }}>Difficulty</th><th style={{ width: '32px' }}></th></tr>
+            <tr><th style={{ width: '38px' }}></th><th style={{ width: '40px' }}>#</th><th>Problem</th><th style={{ width: '90px' }}>Difficulty</th><th style={{ width: '32px' }}></th><th style={{ width: '32px' }}></th></tr>
           </thead>
           <tbody>
             {ss.problems.map((p, pi) => {
@@ -133,10 +139,19 @@ export default function SubstepDetail({ data, stepIdx, substepIdx, onBackToSteps
                         {PENCIL_SVG}
                       </button>
                     </td>
+                    <td style={{ width: '32px' }}>
+                      <button
+                        className={`btn-note ${p.revision ? 'has-note' : ''}`}
+                        onClick={() => onToggleRevision(stepIdx, substepIdx, pi)}
+                        title={p.revision ? 'Remove from revision' : 'Mark for revision'}
+                        style={p.revision ? { color: 'var(--med)' } : {}}>
+                        {REVISION_SVG}
+                      </button>
+                    </td>
                   </tr>
                   {noteOpen && (
                     <tr key={`note-${pi}`} className="note-row">
-                      <td colSpan="5" className="note-row">
+                      <td colSpan="6" className="note-row">
                         <textarea
                           className="note-input"
                           placeholder="Your notes, approach, key insight, edge cases..."

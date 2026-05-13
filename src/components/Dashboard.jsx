@@ -11,6 +11,15 @@ export default function Dashboard({ data, user, onTabChange }) {
   const streak = computeStreak(data.steps);
   const lastSolved = lastSolvedDate(data.steps);
 
+  const revisionProblems = [];
+  for (const step of data.steps) {
+    for (const ss of step.substeps) {
+      for (const p of ss.problems) {
+        if (p.revision) revisionProblems.push({ p, step, ss });
+      }
+    }
+  }
+
   const milestones = [
     { label: "Start getaway's DSA grind", done: stats.total > 0, date: 'May 2026' },
     { label: 'Reach 50 problems',         done: stats.total >= 50,  date: 'Jun 2026' },
@@ -82,6 +91,29 @@ export default function Dashboard({ data, user, onTabChange }) {
           )}
         </div>
       </div>
+
+      {revisionProblems.length > 0 && (
+        <div className="card mt-6 pop-in d2">
+          <div className="card-title-row">
+            <div className="card-title">Revision Queue <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--med)', marginLeft: '6px' }}>{revisionProblems.length}</span></div>
+            <button className="btn btn-sm btn-ghost" onClick={() => onTabChange('leetcode')}>go to DSA →</button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+            {revisionProblems.map(({ p, step, ss }, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', background: 'var(--surface-2)', borderRadius: '8px' }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: step.color, flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.t}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-faint)', marginTop: '1px' }}>{step.name.replace(/\s*\[.*?\]/g, '').trim()} · {ss.name}</div>
+                </div>
+                {p.d === 'E' && <span className="diff diff-easy" style={{ flexShrink: 0 }}>Easy</span>}
+                {p.d === 'M' && <span className="diff diff-medium" style={{ flexShrink: 0 }}>Med</span>}
+                {p.d === 'H' && <span className="diff diff-hard" style={{ flexShrink: 0 }}>Hard</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="card mt-6 pop-in d2">
         <div className="card-title">Roadmap Milestones</div>

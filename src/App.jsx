@@ -69,7 +69,16 @@ export default function App() {
     setData(d);
     setActiveTab(localStorage.getItem('vk_active_tab') || 'dashboard');
     warmupCodeApi();
+    // Load persisted code store
+    const rawCode = localStorage.getItem(key + '_code');
+    if (rawCode) { try { setCodeStore(JSON.parse(rawCode)); } catch {} }
   }, [authChecked, user]);
+
+  // Persist codeStore to localStorage whenever it changes
+  useEffect(() => {
+    if (!authChecked || Object.keys(codeStore).length === 0) return;
+    localStorage.setItem(storeKey + '_code', JSON.stringify(codeStore));
+  }, [codeStore, storeKey, authChecked]);
 
   // Hash routing: read on mount and on hashchange
   useEffect(() => {
@@ -150,6 +159,13 @@ export default function App() {
     persistData(next);
   }
 
+  function toggleRevision(si, ssi, pi) {
+    const next = JSON.parse(JSON.stringify(data));
+    const p = next.steps[si].substeps[ssi].problems[pi];
+    p.revision = !p.revision;
+    persistData(next);
+  }
+
   function saveNote(si, ssi, pi, val) {
     const next = JSON.parse(JSON.stringify(data));
     next.steps[si].substeps[ssi].problems[pi].note = val.trim();
@@ -169,11 +185,17 @@ export default function App() {
     setCodeLang('python');
   }
 
-  function handleCodeClose(savedCode) {
+  function handleCodeClose(savedCode, elapsed) {
     if (codeCtx) {
       const { si, ssi, pi } = codeCtx;
-      const key = `${data.steps[si].substeps[ssi].problems[pi].s}-${codeLang}`;
+      const prob = data.steps[si].substeps[ssi].problems[pi];
+      const key = `${prob.s}-${codeLang}`;
       setCodeStore(prev => ({ ...prev, [key]: savedCode }));
+      if (elapsed >= 10) {
+        const next = JSON.parse(JSON.stringify(data));
+        next.steps[si].substeps[ssi].problems[pi].lastTime = elapsed;
+        persistData(next);
+      }
     }
     setCodeCtx(null);
   }
@@ -252,6 +274,7 @@ export default function App() {
                 onBackToStep={backToStep}
                 onOpenSubstep={openSubstep}
                 onToggleProblem={toggleProblem}
+                onToggleRevision={toggleRevision}
                 onSaveNote={saveNote}
                 onDailyNoteSave={saveDailyNote}
                 onOpenCodeEditor={openCodeEditor}

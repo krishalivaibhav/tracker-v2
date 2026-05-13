@@ -90,7 +90,11 @@ export function saveData(storeKey, d) {
   for (const step of d.steps) {
     for (const ss of step.substeps) {
       for (const p of ss.problems) {
-        if (p.done || p.note) progress[p.s] = { done: !!p.done, solvedOn: p.solvedOn || null, note: p.note || '' };
+        if (p.done || p.note || p.revision || p.lastTime) {
+          progress[p.s] = { done: !!p.done, solvedOn: p.solvedOn || null, note: p.note || '' };
+          if (p.revision) progress[p.s].revision = true;
+          if (p.lastTime) progress[p.s].lastTime = p.lastTime;
+        }
       }
     }
   }
