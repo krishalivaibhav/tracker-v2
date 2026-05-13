@@ -27,7 +27,6 @@ export default function CodeEditorModal({ data, context, lang, codeStore, onClos
   const [cases,       setCases]       = useState(() => initCases(problem));
   const [activeCase,  setActiveCase]  = useState(0);
   const [running,     setRunning]     = useState(false);
-  const [runningAll,  setRunningAll]  = useState(false);
   const [descHtml,    setDescHtml]    = useState(() => buildProblemDesc(problem));
   const [mobilePanel, setMobilePanel] = useState('code');
 
@@ -156,20 +155,6 @@ export default function CodeEditorModal({ data, context, lang, codeStore, onClos
 
   async function handleRun() {
     setRunning(true);
-    try {
-      const actual   = (await runCode(lang, getCurrentCode(), cases[activeCase].input)).trim();
-      const expected = cases[activeCase].expected.trim();
-      const status   = !expected ? 'run' : actual === expected ? 'pass' : 'fail';
-      setCases(prev => prev.map((c, i) => i === activeCase ? { ...c, actual, status } : c));
-    } catch (err) {
-      setCases(prev => prev.map((c, i) => i === activeCase ? { ...c, actual: 'Error: ' + err.message, status: 'error' } : c));
-    } finally {
-      setRunning(false);
-    }
-  }
-
-  async function handleRunAll() {
-    setRunningAll(true);
     const code    = getCurrentCode();
     const results = await Promise.allSettled(cases.map(c => runCode(lang, code, c.input)));
     setCases(prev => prev.map((c, i) => {
@@ -181,7 +166,7 @@ export default function CodeEditorModal({ data, context, lang, codeStore, onClos
       }
       return { ...c, actual: 'Error: ' + (r.reason?.message || 'unknown'), status: 'error' };
     }));
-    setRunningAll(false);
+    setRunning(false);
   }
 
   function addCase() {
@@ -189,8 +174,7 @@ export default function CodeEditorModal({ data, context, lang, codeStore, onClos
     setActiveCase(cases.length);
   }
 
-  const busy = running || runningAll;
-  const cur  = cases[activeCase] || cases[0];
+  const cur = cases[activeCase] || cases[0];
 
   const verdictLabel = {
     pass:  '✓ Correct',
@@ -242,11 +226,8 @@ export default function CodeEditorModal({ data, context, lang, codeStore, onClos
                 <option value="java">Java</option>
                 <option value="javascript">JavaScript</option>
               </select>
-              <button className="btn btn-primary btn-sm" onClick={handleRun} disabled={busy}>
+              <button className="btn btn-primary btn-sm" onClick={handleRun} disabled={running}>
                 {running ? (['cpp','c','java'].includes(lang) ? '⏳ Compiling…' : '⏳ Running…') : '▶ Run'}
-              </button>
-              <button className="btn btn-sm" onClick={handleRunAll} disabled={busy} title="Run all test cases">
-                {runningAll ? '⏳…' : '▶▶ All'}
               </button>
               {problem.lc && (
                 <a href={`https://leetcode.com/problems/${problem.lc}/`} target="_blank" rel="noopener noreferrer" className="btn btn-sm">LC ↗</a>

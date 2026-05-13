@@ -1557,8 +1557,6 @@ select option { background: var(--surface-2); }
   margin: 0; white-space: pre-wrap; word-break: break-all; color: var(--text);
 }
 
-/* Mobile panel toggle (hidden on desktop) */
-.mobile-panel-toggle { display: none; }
 .mpanel-btn {
   padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
   font-family: var(--font-sans); border: 1px solid var(--border);
@@ -1567,9 +1565,14 @@ select option { background: var(--surface-2); }
 }
 .mpanel-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
+/* Hidden on desktop, shown on mobile via media query below */
+@media (min-width: 901px) {
+  .mobile-panel-toggle { display: none; }
+}
+
 @media (max-width: 900px) {
+  .mobile-panel-toggle { display: flex; gap: 4px; }
   .test-io-grid { grid-template-columns: 1fr; }
   .code-modal-toolbar { flex-wrap: wrap; }
-  /* Problem list overflow on narrow screens */
   .substep-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }
