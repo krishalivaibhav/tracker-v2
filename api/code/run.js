@@ -110,6 +110,11 @@ async function runLocally(language, sourceCode, stdin) {
 }
 
 async function runViaWandbox(language, sourceCode, stdin) {
+  // Wandbox saves Java as prog.java — public class requires filename to match
+  if (language === 'java') {
+    sourceCode = sourceCode.replace(/\bpublic\s+(class\s+\w)/g, '$1');
+  }
+
   const { compiler, options } = WANDBOX[language];
   const r = await fetch('https://wandbox.org/api/compile.json', {
     method: 'POST',
