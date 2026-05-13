@@ -4,18 +4,36 @@ async function callGroq(system, user) {
   const model  = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
   if (!apiKey) throw new Error('GROQ_API_KEY is not configured.');
 
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model, temperature: 0.2,
-      response_format: { type: 'json_object' },
-      messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
-    }),
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30_000);
+
+  let res;
+  try {
+    res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model, temperature: 0.2,
+        response_format: { type: 'json_object' },
+        messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
+      }),
+    });
+  } catch (err) {
+    if (err.name === 'AbortError') { const e = new Error('AI request timed out — please try again.'); e.status = 504; throw e; }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || `Groq ${res.status}`);
-  return JSON.parse(data.choices[0].message.content);
+  if (res.status === 429) { const e = new Error('AI service is rate-limited — please wait a moment and try again.'); e.status = 429; throw e; }
+  if (!res.ok) { const e = new Error(data.error?.message || `Groq error ${res.status}`); e.status = 502; throw e; }
+  try {
+    return JSON.parse(data.choices[0].message.content);
+  } catch {
+    const e = new Error('AI returned an unexpected response — please try again.'); e.status = 502; throw e;
+  }
 }
 
 // ── LaTeX builder ──────────────────────────────────────────────────────────
@@ -249,6 +267,6 @@ module.exports = async function handler(req, res) {
       certifications: nList(raw.certifications),
     });
   } catch (err) {
-    res.status(502).json({ error: err.message });
+    res.status(err.status || 502).json({ error: err.message });
   }
 };

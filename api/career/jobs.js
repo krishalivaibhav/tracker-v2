@@ -8,8 +8,9 @@ module.exports = async function handler(req, res) {
   const query = String(role || '').trim();
   if (!query) return res.status(400).json({ error: 'role is required.' });
 
-  const appId  = process.env.ADZUNA_APP_ID  || '9fb3be8f';
-  const appKey = process.env.ADZUNA_APP_KEY || 'e3b6d45d47289f6ace2bf472e3425862';
+  const appId  = process.env.ADZUNA_APP_ID;
+  const appKey = process.env.ADZUNA_APP_KEY;
+  if (!appId || !appKey) return res.status(500).json({ error: 'Job search is not configured.', jobs: [] });
   const country = process.env.ADZUNA_COUNTRY || 'in';
 
   const url = `https://api.adzuna.com/v1/api/jobs/${country}/search/1?` +

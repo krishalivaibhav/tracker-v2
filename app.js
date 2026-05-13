@@ -1844,7 +1844,7 @@ function hideLanding() {
 /* ─── Auth ──────────────────────────────────────────────────── */
 async function initAuth() {
   try {
-    const res = await fetch('/api/auth/me');
+    const res = await fetch('/api/auth/me', { cache: 'no-store' });
     if (res.ok) {
       currentUser = await res.json();
       STORE_KEY = `vk_a2z_v1_${currentUser.id}`;

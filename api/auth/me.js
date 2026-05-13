@@ -25,5 +25,6 @@ module.exports = function handler(req, res) {
   const cookies = parseCookies(req.headers.cookie);
   const user    = verifySession(cookies.session, process.env.SESSION_SECRET);
   if (!user) return res.status(401).json({ error: 'Not authenticated' });
+  res.setHeader('Cache-Control', 'no-store, private');
   res.json(user);
 };
