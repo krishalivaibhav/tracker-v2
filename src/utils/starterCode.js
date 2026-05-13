@@ -82,7 +82,7 @@ export function starterCode(problem, lang) {
     custom:            '',
   };
 
-  const javaHead = 'import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        Scanner sc = new Scanner(System.in);\n\n';
+  const javaHead = 'import java.util.*;\nimport java.io.*;\n\nclass Main {\n    public static void main(String[] args) throws IOException {\n        Scanner sc = new Scanner(System.in);\n\n';
   const javaTail = '\n        // write your solution here\n    }\n}\n';
   const javaBody = {
     single_int:        '        int n = sc.nextInt();\n',

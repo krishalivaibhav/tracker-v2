@@ -7,8 +7,8 @@ const { spawn } = require('child_process');
 // Wandbox: free, no auth, real GCC/OpenJDK/Node on Linux
 const WANDBOX = {
   python:     { compiler: 'cpython-3.13.8',    options: '' },
-  cpp:        { compiler: 'gcc-head',           options: '-std=c++17 -O2' },
-  c:          { compiler: 'gcc-head-c',         options: '-std=c11 -lm' },
+  cpp:        { compiler: 'gcc-head',           options: '-std=c++17\n-O2' },
+  c:          { compiler: 'gcc-head-c',         options: '-std=c11\n-lm' },
   java:       { compiler: 'openjdk-jdk-22+36',  options: '' },
   javascript: { compiler: 'nodejs-20.17.0',     options: '' },
 };
