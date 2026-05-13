@@ -2,7 +2,7 @@ import { lcStats, lcLinkedSolved, computeStreak, lastSolvedDate, stepSolved, ste
 import { daysUntil, fmtDate } from '../utils/helpers.js';
 import { LC_TOTAL, PLACEMENT_DATE } from '../utils/storage.js';
 
-export default function Dashboard({ data, user, onTabChange }) {
+export default function Dashboard({ data, user, onTabChange, onOpenRevisionProblem }) {
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const stats = lcStats(data.steps);
@@ -13,14 +13,14 @@ export default function Dashboard({ data, user, onTabChange }) {
 
   const revisionProblems = [];
   const timeBuckets = { E: [], M: [], H: [] };
-  for (const step of data.steps) {
-    for (const ss of step.substeps) {
-      for (const p of ss.problems) {
-        if (p.revision) revisionProblems.push({ p, step, ss });
+  data.steps.forEach((step, si) => {
+    step.substeps.forEach((ss, ssi) => {
+      ss.problems.forEach(p => {
+        if (p.revision) revisionProblems.push({ p, step, ss, si, ssi });
         if (p.lastTime > 0 && p.d) timeBuckets[p.d]?.push(p.lastTime);
-      }
-    }
-  }
+      });
+    });
+  });
   const hasTimeData = Object.values(timeBuckets).some(a => a.length > 0);
   function avgTime(arr) {
     if (!arr.length) return null;
@@ -127,8 +127,11 @@ export default function Dashboard({ data, user, onTabChange }) {
             <button className="btn btn-sm btn-ghost" onClick={() => onTabChange('leetcode')}>go to DSA →</button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
-            {revisionProblems.map(({ p, step, ss }, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', background: 'var(--surface-2)', borderRadius: '8px' }}>
+            {revisionProblems.map(({ p, step, ss, si, ssi }, i) => (
+              <button key={i} onClick={() => onOpenRevisionProblem(si, ssi)}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', background: 'var(--surface-2)', borderRadius: '8px', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'background var(--dur-fast)' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-3)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-2)'}>
                 <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: step.color, flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.t}</div>
@@ -137,7 +140,7 @@ export default function Dashboard({ data, user, onTabChange }) {
                 {p.d === 'E' && <span className="diff diff-easy" style={{ flexShrink: 0 }}>Easy</span>}
                 {p.d === 'M' && <span className="diff diff-medium" style={{ flexShrink: 0 }}>Med</span>}
                 {p.d === 'H' && <span className="diff diff-hard" style={{ flexShrink: 0 }}>Hard</span>}
-              </div>
+              </button>
             ))}
           </div>
         </div>

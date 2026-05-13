@@ -119,8 +119,17 @@ export default function App() {
     if (id === 'home') { setView('landing'); return; }
     setActiveTab(id);
     localStorage.setItem('vk_active_tab', id);
-    setSelectedStep(null); setSelectedSub(null);
-    history.pushState(null, '', '#' + (id === 'leetcode' ? 'dsa' : id));
+    if (id === 'leetcode') {
+      // Restore hash to the last visited DSA position (state is preserved, just update URL)
+      let hash = 'dsa';
+      if (selectedStep !== null) {
+        hash += '/' + selectedStep;
+        if (selectedSub !== null) hash += '/' + selectedSub;
+      }
+      history.pushState(null, '', '#' + hash);
+    } else {
+      history.pushState(null, '', '#' + id);
+    }
   }
 
   function toggleTheme() {
@@ -135,6 +144,14 @@ export default function App() {
   }
 
   // ─── DSA handlers ───────────────────────────────────────────────────
+  function openRevisionProblem(si, ssi) {
+    setActiveTab('leetcode');
+    localStorage.setItem('vk_active_tab', 'leetcode');
+    setSelectedStep(si);
+    setSelectedSub(ssi);
+    history.pushState(null, '', `#dsa/${si}/${ssi}`);
+  }
+
   function openStep(si) {
     setSelectedStep(si); setSelectedSub(null);
     history.pushState(null, '', `#dsa/${si}`);
@@ -263,7 +280,7 @@ export default function App() {
           />
           <main className="content" id="content-area">
             {activeTab === 'dashboard' && (
-              <Dashboard data={data} user={user} onTabChange={switchTab} />
+              <Dashboard data={data} user={user} onTabChange={switchTab} onOpenRevisionProblem={openRevisionProblem} />
             )}
             {activeTab === 'leetcode' && (
               <DSASheet

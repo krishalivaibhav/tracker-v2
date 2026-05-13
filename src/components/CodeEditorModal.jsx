@@ -28,7 +28,7 @@ export default function CodeEditorModal({ data, context, lang, codeStore, onClos
   const [activeCase,  setActiveCase]  = useState(0);
   const [running,     setRunning]     = useState(false);
   const [descHtml,    setDescHtml]    = useState(() => buildProblemDesc(problem));
-  const [mobilePanel, setMobilePanel] = useState('code');
+  const [mobilePanel, setMobilePanel] = useState('problem');
   const [elapsed,     setElapsed]     = useState(0);
   const timerRef = useRef(null);
   const startRef = useRef(Date.now());
