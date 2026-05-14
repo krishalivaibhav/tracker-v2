@@ -2,9 +2,6 @@ import { lcLinkedSolved } from '../utils/stats.js';
 import { LC_TOTAL } from '../utils/storage.js';
 
 const NAV_ITEMS = [
-  { id: 'home',     label: 'Home',
-    icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="nav-icon"><path d="M1.5 6.5L8 1.5l6.5 5V14a.5.5 0 0 1-.5.5H10V10H6v4.5H2a.5.5 0 0 1-.5-.5V6.5z"/></svg>,
-    special: true },
   { id: 'dashboard', label: 'Dashboard',
     icon: <svg viewBox="0 0 16 16" fill="currentColor" className="nav-icon"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg> },
   { id: 'leetcode', label: 'DSA Sheet',

@@ -117,7 +117,6 @@ export default function App() {
   }
 
   function switchTab(id) {
-    if (id === 'home') { setView('landing'); return; }
     setActiveTab(id);
     localStorage.setItem('vk_active_tab', id);
     if (id === 'leetcode') {
@@ -310,7 +309,6 @@ export default function App() {
       {/* Mobile nav */}
       <nav className="mobile-nav">
         {[
-          { id: 'home', label: 'Home', icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1.5 6.5L8 1.5l6.5 5V14a.5.5 0 0 1-.5.5H10V10H6v4.5H2a.5.5 0 0 1-.5-.5V6.5z"/></svg> },
           { id: 'dashboard', label: 'Dashboard', icon: <svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg> },
           { id: 'leetcode', label: 'DSA', icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M3.5 5L1.5 8l2 3M12.5 5l2 3-2 3M9.5 2.5l-3 11"/></svg> },
           { id: 'career', label: 'Career', icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="14" height="10" rx="1.5"/><path d="M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M8 9h.01"/></svg> },
