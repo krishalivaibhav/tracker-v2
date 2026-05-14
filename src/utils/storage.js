@@ -86,6 +86,14 @@ export function loadData(storeKey) {
 }
 
 export function saveData(storeKey, d) {
+  const progress = extractProgress(d);
+  localStorage.setItem(storeKey, JSON.stringify({
+    progress, dailyNotes: d.dailyNotes,
+    applications: d.applications, projects: d.projects, cgpa: d.cgpa,
+  }));
+}
+
+function extractProgress(d) {
   const progress = {};
   for (const step of d.steps) {
     for (const ss of step.substeps) {
@@ -98,8 +106,31 @@ export function saveData(storeKey, d) {
       }
     }
   }
-  localStorage.setItem(storeKey, JSON.stringify({
-    progress, dailyNotes: d.dailyNotes,
-    applications: d.applications, projects: d.projects, cgpa: d.cgpa,
-  }));
+  return progress;
+}
+
+export async function loadFromDB() {
+  try {
+    const r = await fetch('/api/db/load', { cache: 'no-store' });
+    if (!r.ok) return null;
+    const { data } = await r.json();
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+export function saveToDB(d) {
+  const progress = extractProgress(d);
+  fetch('/api/db/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      progress,
+      dailyNotes: d.dailyNotes,
+      applications: d.applications,
+      projects: d.projects,
+      cgpa: d.cgpa,
+    }),
+  }).catch(() => {});
 }

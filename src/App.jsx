@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { loadData, saveData } from './utils/storage.js';
+import { loadData, saveData, loadFromDB, saveToDB } from './utils/storage.js';
 import { today } from './utils/helpers.js';
 import { warmupCodeApi } from './utils/codeRunner.js';
 import LandingPage from './components/LandingPage.jsx';
@@ -61,18 +61,31 @@ export default function App() {
   useEffect(() => {
     if (!authChecked) return;
     const key = user ? `vk_a2z_v1_${user.id}` : 'vk_a2z_v1';
-    // One-time migration from shared key to user-specific key
-    if (user && !localStorage.getItem(key)) {
-      const legacy = localStorage.getItem('vk_a2z_v1');
-      if (legacy) localStorage.setItem(key, legacy);
+
+    async function load() {
+      // One-time migration from shared key to user-specific key
+      if (user && !localStorage.getItem(key)) {
+        const legacy = localStorage.getItem('vk_a2z_v1');
+        if (legacy) localStorage.setItem(key, legacy);
+      }
+
+      // Logged-in users: pull from DB (source of truth) and sync into localStorage
+      if (user) {
+        const dbPayload = await loadFromDB();
+        if (dbPayload) {
+          localStorage.setItem(key, JSON.stringify(dbPayload));
+        }
+      }
+
+      const d = loadData(key);
+      setData(d);
+      setActiveTab(localStorage.getItem('vk_active_tab') || 'dashboard');
+      warmupCodeApi();
+      const rawCode = localStorage.getItem(key + '_code');
+      if (rawCode) { try { setCodeStore(JSON.parse(rawCode)); } catch {} }
     }
-    const d = loadData(key);
-    setData(d);
-    setActiveTab(localStorage.getItem('vk_active_tab') || 'dashboard');
-    warmupCodeApi();
-    // Load persisted code store
-    const rawCode = localStorage.getItem(key + '_code');
-    if (rawCode) { try { setCodeStore(JSON.parse(rawCode)); } catch {} }
+
+    load();
   }, [authChecked, user]);
 
   // Persist codeStore to localStorage whenever it changes
@@ -114,6 +127,7 @@ export default function App() {
   function persistData(newData) {
     setData(newData);
     saveData(storeKey, newData);
+    if (user) saveToDB(newData);
   }
 
   function switchTab(id) {
@@ -139,7 +153,9 @@ export default function App() {
   async function handleLogout() {
     try { await fetch('/api/auth/logout', { cache: 'no-store' }); } catch {}
     localStorage.removeItem('vk_active_tab');
-    location.replace('/');
+    setUser(null);
+    setView('landing');
+    history.replaceState(null, '', '/');
   }
 
   // ─── DSA handlers ───────────────────────────────────────────────────
