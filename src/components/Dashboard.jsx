@@ -13,6 +13,7 @@ export default function Dashboard({ data, user, onTabChange, onOpenRevisionProbl
   const todayStr = new Date().toISOString().slice(0, 10);
   const revisionDue = [], revisionUpcoming = [];
   const timeBuckets = { E: [], M: [], H: [] };
+  const activityMap = {};
   data.steps.forEach((step, si) => {
     step.substeps.forEach((ss, ssi) => {
       ss.problems.forEach((p, pi) => {
@@ -21,8 +22,26 @@ export default function Dashboard({ data, user, onTabChange, onOpenRevisionProbl
           (due ? revisionDue : revisionUpcoming).push({ p, step, ss, si, ssi, pi });
         }
         if (p.lastTime > 0 && p.d) timeBuckets[p.d]?.push(p.lastTime);
+        if (p.done && p.solvedOn) activityMap[p.solvedOn] = (activityMap[p.solvedOn] || 0) + 1;
       });
     });
+  });
+
+  // 26-week heatmap grid aligned to Sunday
+  const heatStart = new Date();
+  heatStart.setDate(heatStart.getDate() - 181 - heatStart.getDay());
+  const weeks = Array.from({ length: 26 }, (_, wi) =>
+    Array.from({ length: 7 }, (_, di) => {
+      const d = new Date(heatStart);
+      d.setDate(heatStart.getDate() + wi * 7 + di);
+      const s = d.toISOString().slice(0, 10);
+      return { date: s, count: activityMap[s] || 0, future: s > todayStr };
+    })
+  );
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthLabels = weeks.map((week, wi) => {
+    const d = new Date(week[0].date);
+    return (wi === 0 || d.getDate() <= 7) ? MONTHS[d.getMonth()] : '';
   });
   const hasTimeData = Object.values(timeBuckets).some(a => a.length > 0);
   function avgTime(arr) {
@@ -166,6 +185,51 @@ export default function Dashboard({ data, user, onTabChange, onOpenRevisionProbl
           </div>
         </div>
       )}
+
+      <div className="card mt-6 pop-in d2">
+        <div className="card-title-row">
+          <div className="card-title">Activity</div>
+          <span style={{ fontSize: '11px', color: 'var(--text-faint)' }}>last 6 months</span>
+        </div>
+        <div style={{ overflowX: 'auto', marginTop: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 'fit-content' }}>
+            {/* Month labels */}
+            <div style={{ display: 'flex', gap: '3px' }}>
+              {weeks.map((_, wi) => (
+                <div key={wi} style={{ width: '12px', fontSize: '9px', color: 'var(--text-faint)', textAlign: 'left', overflow: 'visible', whiteSpace: 'nowrap' }}>
+                  {monthLabels[wi]}
+                </div>
+              ))}
+            </div>
+            {/* Day rows */}
+            {[0,1,2,3,4,5,6].map(di => (
+              <div key={di} style={{ display: 'flex', gap: '3px' }}>
+                {weeks.map((week, wi) => {
+                  const { date, count, future } = week[di];
+                  const bg = future || count === 0 ? 'var(--surface-2)'
+                    : count === 1 ? 'rgba(34,197,94,0.3)'
+                    : count === 2 ? 'rgba(34,197,94,0.6)'
+                    : 'var(--easy)';
+                  return (
+                    <div key={wi} title={future ? '' : count > 0 ? `${date}: ${count} solved` : date}
+                      style={{ width: '12px', height: '12px', borderRadius: '2px', background: bg, flexShrink: 0 }} />
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '10px', fontSize: '11px', color: 'var(--text-faint)' }}>
+          <span>Less</span>
+          {[0,1,2,3].map(n => (
+            <div key={n} style={{ width: '10px', height: '10px', borderRadius: '2px', flexShrink: 0,
+              background: n===0 ? 'var(--surface-2)' : n===1 ? 'rgba(34,197,94,0.3)' : n===2 ? 'rgba(34,197,94,0.6)' : 'var(--easy)'
+            }} />
+          ))}
+          <span>More</span>
+          <span style={{ marginLeft: 'auto' }}>{Object.values(activityMap).reduce((a,b) => a+b, 0)} problems in last 6 months</span>
+        </div>
+      </div>
 
       <div className="card mt-6 pop-in d2">
         <div className="card-title">Roadmap Milestones</div>
