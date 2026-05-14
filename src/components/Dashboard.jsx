@@ -27,21 +27,20 @@ export default function Dashboard({ data, user, onTabChange, onOpenRevisionProbl
     });
   });
 
-  // 26-week heatmap grid aligned to Sunday
+  // 26-week heatmap: start from Sunday of current week, go back 25 weeks
   const heatStart = new Date();
-  heatStart.setDate(heatStart.getDate() - 181 - heatStart.getDay());
-  const weeks = Array.from({ length: 26 }, (_, wi) =>
-    Array.from({ length: 7 }, (_, di) => {
+  heatStart.setDate(heatStart.getDate() - heatStart.getDay() - 25 * 7);
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const weeks = Array.from({ length: 26 }, (_, wi) => {
+    const days = Array.from({ length: 7 }, (_, di) => {
       const d = new Date(heatStart);
       d.setDate(heatStart.getDate() + wi * 7 + di);
       const s = d.toISOString().slice(0, 10);
       return { date: s, count: activityMap[s] || 0, future: s > todayStr };
-    })
-  );
-  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const monthLabels = weeks.map((week, wi) => {
-    const d = new Date(week[0].date);
-    return (wi === 0 || d.getDate() <= 7) ? MONTHS[d.getMonth()] : '';
+    });
+    const firstDay = new Date(days[0].date);
+    const monthLabel = (wi === 0 || firstDay.getDate() <= 7) ? MONTHS[firstDay.getMonth()] : '';
+    return { days, monthLabel };
   });
   const hasTimeData = Object.values(timeBuckets).some(a => a.length > 0);
   function avgTime(arr) {
@@ -191,28 +190,23 @@ export default function Dashboard({ data, user, onTabChange, onOpenRevisionProbl
           <div className="card-title">Activity</div>
           <span style={{ fontSize: '11px', color: 'var(--text-faint)' }}>last 6 months</span>
         </div>
-        <div style={{ overflowX: 'auto', marginTop: '8px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 'fit-content' }}>
-            {/* Month labels */}
-            <div style={{ display: 'flex', gap: '3px' }}>
-              {weeks.map((_, wi) => (
-                <div key={wi} style={{ width: '12px', fontSize: '9px', color: 'var(--text-faint)', textAlign: 'left', overflow: 'visible', whiteSpace: 'nowrap' }}>
-                  {monthLabels[wi]}
+        <div style={{ overflowX: 'auto', paddingBottom: '4px', marginTop: '8px' }}>
+          <div style={{ display: 'flex', gap: '3px', width: 'max-content' }}>
+            {weeks.map(({ days, monthLabel }, wi) => (
+              <div key={wi} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                <div style={{ height: '12px', fontSize: '9px', color: 'var(--text-faint)', whiteSpace: 'nowrap' }}>
+                  {monthLabel}
                 </div>
-              ))}
-            </div>
-            {/* Day rows */}
-            {[0,1,2,3,4,5,6].map(di => (
-              <div key={di} style={{ display: 'flex', gap: '3px' }}>
-                {weeks.map((week, wi) => {
-                  const { date, count, future } = week[di];
+                {days.map(({ date, count, future }, di) => {
                   const bg = future || count === 0 ? 'var(--surface-2)'
                     : count === 1 ? 'rgba(34,197,94,0.3)'
                     : count === 2 ? 'rgba(34,197,94,0.6)'
                     : 'var(--easy)';
                   return (
-                    <div key={wi} title={future ? '' : count > 0 ? `${date}: ${count} solved` : date}
-                      style={{ width: '12px', height: '12px', borderRadius: '2px', background: bg, flexShrink: 0 }} />
+                    <div key={di}
+                      title={!future && count > 0 ? `${date}: ${count} solved` : date}
+                      style={{ width: '12px', height: '12px', borderRadius: '2px', background: bg, flexShrink: 0 }}
+                    />
                   );
                 })}
               </div>
