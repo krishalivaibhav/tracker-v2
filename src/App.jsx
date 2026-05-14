@@ -198,10 +198,34 @@ export default function App() {
     persistData(next);
   }
 
+  const REVIEW_INTERVALS = [1, 3, 7, 14, 30];
+
+  function addDays(n) {
+    const d = new Date();
+    d.setDate(d.getDate() + n);
+    return d.toISOString().slice(0, 10);
+  }
+
   function toggleRevision(si, ssi, pi) {
     const next = JSON.parse(JSON.stringify(data));
     const p = next.steps[si].substeps[ssi].problems[pi];
     p.revision = !p.revision;
+    if (p.revision) {
+      p.nextReview  = addDays(1);
+      p.reviewCount = 0;
+    } else {
+      delete p.nextReview;
+      delete p.reviewCount;
+    }
+    persistData(next);
+  }
+
+  function reviewDone(si, ssi, pi) {
+    const next = JSON.parse(JSON.stringify(data));
+    const p = next.steps[si].substeps[ssi].problems[pi];
+    const count = (p.reviewCount || 0) + 1;
+    p.reviewCount = count;
+    p.nextReview  = addDays(REVIEW_INTERVALS[Math.min(count, REVIEW_INTERVALS.length - 1)]);
     persistData(next);
   }
 
@@ -302,7 +326,7 @@ export default function App() {
           />
           <main className="content" id="content-area">
             {activeTab === 'dashboard' && (
-              <Dashboard data={data} user={user} onTabChange={switchTab} onOpenRevisionProblem={openRevisionProblem} />
+              <Dashboard data={data} user={user} onTabChange={switchTab} onOpenRevisionProblem={openRevisionProblem} onReviewDone={reviewDone} />
             )}
             {activeTab === 'leetcode' && (
               <DSASheet

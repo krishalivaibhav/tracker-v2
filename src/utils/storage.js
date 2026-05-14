@@ -102,6 +102,8 @@ function extractProgress(d) {
           progress[p.s] = { done: !!p.done, solvedOn: p.solvedOn || null, note: p.note || '' };
           if (p.revision) progress[p.s].revision = true;
           if (p.lastTime) progress[p.s].lastTime = p.lastTime;
+          if (p.nextReview) progress[p.s].nextReview = p.nextReview;
+          if (p.reviewCount != null) progress[p.s].reviewCount = p.reviewCount;
         }
       }
     }

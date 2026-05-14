@@ -2,7 +2,7 @@ import { lcStats, lcLinkedSolved, computeStreak, lastSolvedDate, stepSolved, ste
 import { fmtDate } from '../utils/helpers.js';
 import { LC_TOTAL } from '../utils/storage.js';
 
-export default function Dashboard({ data, user, onTabChange, onOpenRevisionProblem }) {
+export default function Dashboard({ data, user, onTabChange, onOpenRevisionProblem, onReviewDone }) {
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const stats = lcStats(data.steps);
@@ -10,12 +10,16 @@ export default function Dashboard({ data, user, onTabChange, onOpenRevisionProbl
   const streak = computeStreak(data.steps);
   const lastSolved = lastSolvedDate(data.steps);
 
-  const revisionProblems = [];
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const revisionDue = [], revisionUpcoming = [];
   const timeBuckets = { E: [], M: [], H: [] };
   data.steps.forEach((step, si) => {
     step.substeps.forEach((ss, ssi) => {
       ss.problems.forEach((p, pi) => {
-        if (p.revision) revisionProblems.push({ p, step, ss, si, ssi, pi });
+        if (p.revision) {
+          const due = !p.nextReview || p.nextReview <= todayStr;
+          (due ? revisionDue : revisionUpcoming).push({ p, step, ss, si, ssi, pi });
+        }
         if (p.lastTime > 0 && p.d) timeBuckets[p.d]?.push(p.lastTime);
       });
     });
@@ -119,27 +123,45 @@ export default function Dashboard({ data, user, onTabChange, onOpenRevisionProbl
         </div>
       </div>
 
-      {revisionProblems.length > 0 && (
+      {(revisionDue.length > 0 || revisionUpcoming.length > 0) && (
         <div className="card mt-6 pop-in d2">
           <div className="card-title-row">
-            <div className="card-title">Revision Queue <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--med)', marginLeft: '6px' }}>{revisionProblems.length}</span></div>
+            <div className="card-title">
+              Revision Queue
+              <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--med)', marginLeft: '6px' }}>
+                {revisionDue.length} due
+              </span>
+              {revisionUpcoming.length > 0 && (
+                <span style={{ fontSize: '11px', fontWeight: 400, color: 'var(--text-faint)', marginLeft: '6px' }}>
+                  · {revisionUpcoming.length} upcoming
+                </span>
+              )}
+            </div>
             <button className="btn btn-sm btn-ghost" onClick={() => onTabChange('leetcode')}>go to DSA →</button>
           </div>
+          {revisionDue.length === 0 && (
+            <div style={{ fontSize: '13px', color: 'var(--text-faint)', padding: '12px 0' }}>
+              All caught up! Next review in {revisionUpcoming[0]?.p.nextReview || '—'}.
+            </div>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
-            {revisionProblems.map(({ p, step, ss, si, ssi, pi }, i) => (
-              <button key={i} onClick={() => onOpenRevisionProblem(si, ssi, pi)}
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', background: 'var(--surface-2)', borderRadius: '8px', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'background var(--dur-fast)' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-3)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-2)'}>
+            {revisionDue.map(({ p, step, ss, si, ssi, pi }, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: 'var(--surface-2)', borderRadius: '8px' }}>
                 <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: step.color, flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <button onClick={() => onOpenRevisionProblem(si, ssi, pi)}
+                  style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>
                   <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.t}</div>
                   <div style={{ fontSize: '11px', color: 'var(--text-faint)', marginTop: '1px' }}>{step.name.replace(/\s*\[.*?\]/g, '').trim()} · {ss.name}</div>
-                </div>
+                </button>
                 {p.d === 'E' && <span className="diff diff-easy" style={{ flexShrink: 0 }}>Easy</span>}
                 {p.d === 'M' && <span className="diff diff-medium" style={{ flexShrink: 0 }}>Med</span>}
                 {p.d === 'H' && <span className="diff diff-hard" style={{ flexShrink: 0 }}>Hard</span>}
-              </button>
+                <button onClick={() => onReviewDone(si, ssi, pi)}
+                  title="Mark as reviewed"
+                  style={{ flexShrink: 0, background: 'var(--easy-soft)', border: '1px solid var(--easy)', color: 'var(--easy)', borderRadius: '6px', padding: '3px 8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+                  ✓ Done
+                </button>
+              </div>
             ))}
           </div>
         </div>
