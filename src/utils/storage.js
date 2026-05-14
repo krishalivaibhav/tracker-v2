@@ -120,7 +120,7 @@ export async function loadFromDB() {
   }
 }
 
-export function saveToDB(d) {
+export function saveToDB(d, codeStore) {
   const progress = extractProgress(d);
   fetch('/api/db', {
     method: 'POST',
@@ -131,6 +131,7 @@ export function saveToDB(d) {
       applications: d.applications,
       projects: d.projects,
       cgpa: d.cgpa,
+      codeStore: codeStore || {},
     }),
   }).catch(() => {});
 }

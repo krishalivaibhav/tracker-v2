@@ -73,7 +73,11 @@ export default function App() {
       if (user) {
         const dbPayload = await loadFromDB();
         if (dbPayload) {
-          localStorage.setItem(key, JSON.stringify(dbPayload));
+          const { codeStore: dbCode, ...rest } = dbPayload;
+          localStorage.setItem(key, JSON.stringify(rest));
+          if (dbCode && Object.keys(dbCode).length > 0) {
+            localStorage.setItem(key + '_code', JSON.stringify(dbCode));
+          }
         }
       }
 
@@ -88,10 +92,11 @@ export default function App() {
     load();
   }, [authChecked, user]);
 
-  // Persist codeStore to localStorage whenever it changes
+  // Persist codeStore to localStorage + DB whenever it changes
   useEffect(() => {
     if (!authChecked || Object.keys(codeStore).length === 0) return;
     localStorage.setItem(storeKey + '_code', JSON.stringify(codeStore));
+    if (user && data) saveToDB(data, codeStore);
   }, [codeStore, storeKey, authChecked]);
 
   // Hash routing: read on mount and on hashchange
@@ -127,7 +132,7 @@ export default function App() {
   function persistData(newData) {
     setData(newData);
     saveData(storeKey, newData);
-    if (user) saveToDB(newData);
+    if (user) saveToDB(newData, codeStore);
   }
 
   function switchTab(id) {

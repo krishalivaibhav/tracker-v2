@@ -16,8 +16,8 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { progress, dailyNotes, applications, projects, cgpa } = req.body || {};
-    const data = { progress, dailyNotes, applications, projects, cgpa };
+    const { progress, dailyNotes, applications, projects, cgpa, codeStore } = req.body || {};
+    const data = { progress, dailyNotes, applications, projects, cgpa, codeStore };
     await sql`
       INSERT INTO user_data (user_id, data, updated_at)
       VALUES (${user.id}, ${data}, NOW())
