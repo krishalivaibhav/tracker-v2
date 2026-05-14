@@ -27,11 +27,11 @@ export default function Dashboard({ data, user, onTabChange, onOpenRevisionProbl
     });
   });
 
-  // 26-week heatmap: start from Sunday of current week, go back 25 weeks
+  // 52-week heatmap: start from Sunday of current week, go back 51 weeks
   const heatStart = new Date();
-  heatStart.setDate(heatStart.getDate() - heatStart.getDay() - 25 * 7);
+  heatStart.setDate(heatStart.getDate() - heatStart.getDay() - 51 * 7);
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const weeks = Array.from({ length: 26 }, (_, wi) => {
+  const weeks = Array.from({ length: 52 }, (_, wi) => {
     const days = Array.from({ length: 7 }, (_, di) => {
       const d = new Date(heatStart);
       d.setDate(heatStart.getDate() + wi * 7 + di);
@@ -188,7 +188,7 @@ export default function Dashboard({ data, user, onTabChange, onOpenRevisionProbl
       <div className="card mt-6 pop-in d2">
         <div className="card-title-row">
           <div className="card-title">Activity</div>
-          <span style={{ fontSize: '11px', color: 'var(--text-faint)' }}>last 6 months</span>
+          <span style={{ fontSize: '11px', color: 'var(--text-faint)' }}>last 12 months</span>
         </div>
         <div style={{ overflowX: 'auto', paddingBottom: '4px', marginTop: '8px' }}>
           <div style={{ display: 'flex', gap: '3px', width: 'max-content' }}>
@@ -205,7 +205,7 @@ export default function Dashboard({ data, user, onTabChange, onOpenRevisionProbl
                   return (
                     <div key={di}
                       title={!future && count > 0 ? `${date}: ${count} solved` : date}
-                      style={{ width: '12px', height: '12px', borderRadius: '2px', background: bg, flexShrink: 0 }}
+                      style={{ width: '14px', height: '14px', borderRadius: '3px', background: bg, flexShrink: 0 }}
                     />
                   );
                 })}
@@ -221,7 +221,7 @@ export default function Dashboard({ data, user, onTabChange, onOpenRevisionProbl
             }} />
           ))}
           <span>More</span>
-          <span style={{ marginLeft: 'auto' }}>{Object.values(activityMap).reduce((a,b) => a+b, 0)} problems in last 6 months</span>
+          <span style={{ marginLeft: 'auto' }}>{Object.values(activityMap).reduce((a,b) => a+b, 0)} problems in last 12 months</span>
         </div>
       </div>
 
