@@ -188,40 +188,79 @@ export default function Dashboard({ data, user, onTabChange, onOpenRevisionProbl
       <div className="card mt-6 pop-in d2">
         <div className="card-title-row">
           <div className="card-title">Activity</div>
-          <span style={{ fontSize: '11px', color: 'var(--text-faint)' }}>last 12 months</span>
+          <span style={{ fontSize: '11px', color: 'var(--text-faint)' }}>
+            {Object.values(activityMap).reduce((a, b) => a + b, 0)} problems in the last year
+          </span>
         </div>
-        <div style={{ overflowX: 'auto', paddingBottom: '4px', marginTop: '8px' }}>
-          <div style={{ display: 'flex', gap: '3px', width: 'max-content' }}>
-            {weeks.map(({ days, monthLabel }, wi) => (
-              <div key={wi} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                <div style={{ height: '12px', fontSize: '9px', color: 'var(--text-faint)', whiteSpace: 'nowrap' }}>
-                  {monthLabel}
+        <div style={{ overflowX: 'auto', paddingBottom: '2px' }}>
+          <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'flex-start' }}>
+
+            {/* Day-of-week labels */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', paddingTop: '22px', flexShrink: 0 }}>
+              {['', 'Mon', '', 'Wed', '', 'Fri', ''].map((label, i) => (
+                <div key={i} style={{
+                  height: '13px', width: '22px', fontSize: '9px', color: 'var(--text-faint)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+                }}>
+                  {label}
                 </div>
-                {days.map(({ date, count, future }, di) => {
-                  const bg = future || count === 0 ? 'var(--surface-2)'
-                    : count === 1 ? 'rgba(34,197,94,0.3)'
-                    : count === 2 ? 'rgba(34,197,94,0.6)'
-                    : 'var(--easy)';
-                  return (
-                    <div key={di}
-                      title={!future && count > 0 ? `${date}: ${count} solved` : date}
-                      style={{ width: '14px', height: '14px', borderRadius: '3px', background: bg, flexShrink: 0 }}
-                    />
-                  );
-                })}
-              </div>
-            ))}
+              ))}
+            </div>
+
+            {/* Week columns — month label sits inside each column for perfect alignment */}
+            <div style={{ display: 'flex', gap: '2px' }}>
+              {weeks.map(({ days, monthLabel }, wi) => (
+                <div key={wi} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  {/* Month label */}
+                  <div style={{
+                    height: '18px', fontSize: '10px', fontWeight: 500,
+                    color: monthLabel ? 'var(--text-muted)' : 'transparent',
+                    whiteSpace: 'nowrap', overflow: 'visible', paddingBottom: '2px',
+                    display: 'flex', alignItems: 'flex-end',
+                  }}>
+                    {monthLabel || '.'}
+                  </div>
+                  {/* Day cells */}
+                  {days.map(({ date, count, future }, di) => {
+                    const isToday = date === todayStr;
+                    const bg = future ? 'transparent'
+                      : count === 0 ? 'var(--surface-3)'
+                      : count === 1 ? 'rgba(34,197,94,0.22)'
+                      : count === 2 ? 'rgba(34,197,94,0.48)'
+                      : count === 3 ? 'rgba(34,197,94,0.74)'
+                      : 'var(--easy)';
+                    return (
+                      <div key={di}
+                        title={!future ? (count > 0 ? `${date} — ${count} problem${count > 1 ? 's' : ''} solved` : date) : ''}
+                        style={{
+                          width: '13px', height: '13px', borderRadius: '2px',
+                          background: bg, flexShrink: 0, boxSizing: 'border-box',
+                          outline: isToday ? '2px solid var(--easy)' : 'none',
+                          outlineOffset: '1px',
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '10px', fontSize: '11px', color: 'var(--text-faint)' }}>
+
+        {/* Legend */}
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', marginTop: '12px', fontSize: '11px', color: 'var(--text-faint)' }}>
           <span>Less</span>
-          {[0,1,2,3].map(n => (
-            <div key={n} style={{ width: '10px', height: '10px', borderRadius: '2px', flexShrink: 0,
-              background: n===0 ? 'var(--surface-2)' : n===1 ? 'rgba(34,197,94,0.3)' : n===2 ? 'rgba(34,197,94,0.6)' : 'var(--easy)'
+          {[0, 1, 2, 3, 4].map(n => (
+            <div key={n} style={{
+              width: '11px', height: '11px', borderRadius: '2px', flexShrink: 0,
+              background: n === 0 ? 'var(--surface-3)'
+                : n === 1 ? 'rgba(34,197,94,0.22)'
+                : n === 2 ? 'rgba(34,197,94,0.48)'
+                : n === 3 ? 'rgba(34,197,94,0.74)'
+                : 'var(--easy)',
             }} />
           ))}
           <span>More</span>
-          <span style={{ marginLeft: 'auto' }}>{Object.values(activityMap).reduce((a,b) => a+b, 0)} problems in last 12 months</span>
         </div>
       </div>
 
