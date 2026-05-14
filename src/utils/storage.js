@@ -111,7 +111,7 @@ function extractProgress(d) {
 
 export async function loadFromDB() {
   try {
-    const r = await fetch('/api/db/load', { cache: 'no-store' });
+    const r = await fetch('/api/db', { cache: 'no-store' });
     if (!r.ok) return null;
     const { data } = await r.json();
     return data;
@@ -122,7 +122,7 @@ export async function loadFromDB() {
 
 export function saveToDB(d) {
   const progress = extractProgress(d);
-  fetch('/api/db/save', {
+  fetch('/api/db', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
