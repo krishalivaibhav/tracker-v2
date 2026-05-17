@@ -110,7 +110,7 @@ export default function CareerTools() {
       if (!text) { alert('Upload a PDF or paste your resume text first.'); return; }
       setResumeText(text);
       setSelectedRole('');
-      const res = await fetch('/api/career/scan', {
+      const res = await fetch('/api/career/search?type=scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resume_text: text }),
@@ -159,7 +159,7 @@ export default function CareerTools() {
     setLoading('jobs');
     setActionResults(null);
     try {
-      const res = await fetch('/api/career/jobs', {
+      const res = await fetch('/api/career/search?type=jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: selectedRole }),

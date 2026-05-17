@@ -6,6 +6,7 @@ export default function DSASheet({
   data, selectedStep, selectedSubstep, highlightPi,
   onStepClick, onSubstepClick, onBackToSteps, onBackToStep, onOpenSubstep,
   onToggleProblem, onToggleRevision, onSaveNote, onDailyNoteSave, onOpenCodeEditor,
+  onSwitchSheet,
 }) {
   if (selectedStep !== null && selectedSubstep !== null) {
     return (
@@ -39,6 +40,7 @@ export default function DSASheet({
       data={data}
       onStepClick={onStepClick}
       onNoteSave={onDailyNoteSave}
+      onSwitchSheet={onSwitchSheet}
     />
   );
 }

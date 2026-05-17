@@ -75,11 +75,16 @@ function nList(v)  {
   return [];
 }
 
+const { checkRateLimit, rateLimitExceeded } = require('../_lib/rateLimit');
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const rl = await checkRateLimit(req, 'analyze', 5);
+  if (!rl.allowed) return rateLimitExceeded(res, rl.resetAt);
 
   const { resume_text, target_role, job_description } = req.body || {};
   if (!nText(resume_text)) return res.status(400).json({ error: 'resume_text is required.' });

@@ -1,5 +1,4 @@
-import { lcLinkedSolved } from '../utils/stats.js';
-import { LC_TOTAL } from '../utils/storage.js';
+import { lcStats } from '../utils/stats.js';
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard',
@@ -10,9 +9,11 @@ const NAV_ITEMS = [
     icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="nav-icon"><rect x="1" y="4" width="14" height="10" rx="1.5"/><path d="M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M8 9h.01"/></svg> },
 ];
 
-export default function Sidebar({ activeTab, steps, user, onTabChange, onLogout }) {
-  const lcSolved = lcLinkedSolved(steps);
-  const pct = Math.min(100, lcSolved / LC_TOTAL * 100).toFixed(1);
+export default function Sidebar({ activeTab, steps, user, onTabChange, onLogout, onOpenSearch }) {
+  const stats = lcStats(steps);
+  const sheetTotal = steps.reduce((acc, step) =>
+    acc + step.substeps.reduce((a, ss) => a + ss.problems.length, 0), 0);
+  const pct = Math.min(100, stats.total / Math.max(1, sheetTotal) * 100).toFixed(1);
 
   const initials = user
     ? (() => { const parts = user.name.split(' '); return (parts[0][0] + (parts[1]?.[0] || '')).toUpperCase(); })()
@@ -25,6 +26,14 @@ export default function Sidebar({ activeTab, steps, user, onTabChange, onLogout 
         <div className="brand-name">Track<span>+</span></div>
       </div>
 
+      <button className="sidebar-search-btn" onClick={onOpenSearch} title="Search problems (⌘K)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" width="13" height="13">
+          <circle cx="6.5" cy="6.5" r="4.5"/><path d="M11 11l3 3"/>
+        </svg>
+        <span>Search problems…</span>
+        <kbd>⌘K</kbd>
+      </button>
+
       <div className="nav-section-label">Workspace</div>
       <nav className="nav">
         {NAV_ITEMS.map(item => (
@@ -35,7 +44,7 @@ export default function Sidebar({ activeTab, steps, user, onTabChange, onLogout 
           >
             {item.icon} {item.label}
             {item.id === 'leetcode' && (
-              <span className="nav-badge">{lcSolved}/{LC_TOTAL}</span>
+              <span className="nav-badge">{stats.total}/{sheetTotal}</span>
             )}
           </button>
         ))}
@@ -54,8 +63,8 @@ export default function Sidebar({ activeTab, steps, user, onTabChange, onLogout 
         </div>
         <div>
           <div className="xp-text" style={{ marginBottom: '5px' }}>
-            <span>LeetCode</span>
-            <span>{lcSolved} / {LC_TOTAL}</span>
+            <span>Progress</span>
+            <span>{stats.total} / {sheetTotal}</span>
           </div>
           <div className="xp-bar">
             <div className="xp-bar-fill" style={{ width: `${pct}%` }} />

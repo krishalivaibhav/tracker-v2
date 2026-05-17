@@ -1,4 +1,6 @@
-const SYSTEM = `
+// Merged handler: type=scan (resume audit) | type=jobs (job search)
+
+const SCAN_SYSTEM = `
 You are an expert ATS recruiter performing a standalone resume quality audit.
 Assess clarity, impact, measurable outcomes, technical coverage, and communication strength.
 Return valid JSON only — no markdown, no extra keys.
@@ -33,7 +35,6 @@ async function callGroq(system, user) {
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 30_000);
-
   let res;
   try {
     res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -52,15 +53,11 @@ async function callGroq(system, user) {
   } finally {
     clearTimeout(timer);
   }
-
   const data = await res.json();
   if (res.status === 429) { const e = new Error('AI service is rate-limited — please wait a moment and try again.'); e.status = 429; throw e; }
   if (!res.ok) { const e = new Error(data.error?.message || `Groq error ${res.status}`); e.status = 502; throw e; }
-  try {
-    return JSON.parse(data.choices[0].message.content);
-  } catch {
-    const e = new Error('AI returned an unexpected response — please try again.'); e.status = 502; throw e;
-  }
+  try { return JSON.parse(data.choices[0].message.content); }
+  catch { const e = new Error('AI returned an unexpected response.'); e.status = 502; throw e; }
 }
 
 function nScore(v) { return Math.max(0, Math.min(100, parseInt(v) || 0)); }
@@ -74,17 +71,11 @@ function nList(v)  {
   return [];
 }
 
-module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
+async function handleScan(req, res) {
   const { resume_text } = req.body || {};
   if (!nText(resume_text)) return res.status(400).json({ error: 'resume_text is required.' });
-
   try {
-    const raw = await callGroq(SYSTEM, `Candidate Resume:\n${resume_text}`);
+    const raw = await callGroq(SCAN_SYSTEM, `Candidate Resume:\n${resume_text}`);
     res.json({
       cv_score:          nScore(raw.cv_score),
       current_status:    nText(raw.current_status) || 'Early Career',
@@ -99,4 +90,57 @@ module.exports = async function handler(req, res) {
   } catch (err) {
     res.status(err.status || 502).json({ error: err.message });
   }
+}
+
+async function handleJobs(req, res) {
+  const { role } = req.body || {};
+  const query = String(role || '').trim();
+  if (!query) return res.status(400).json({ error: 'role is required.' });
+
+  const appId  = process.env.ADZUNA_APP_ID;
+  const appKey = process.env.ADZUNA_APP_KEY;
+  if (!appId || !appKey) return res.status(500).json({ error: 'Job search is not configured.', jobs: [] });
+  const country = process.env.ADZUNA_COUNTRY || 'in';
+
+  const url = `https://api.adzuna.com/v1/api/jobs/${country}/search/1?` +
+    `app_id=${appId}&app_key=${appKey}&results_per_page=8&what=${encodeURIComponent(query)}&content-type=application/json`;
+  try {
+    const adzunaRes = await fetch(url);
+    if (!adzunaRes.ok) throw new Error(`Adzuna ${adzunaRes.status}`);
+    const data = await adzunaRes.json();
+    const jobs = (data.results || []).map(j => ({
+      title:       j.title || '',
+      company:     j.company?.display_name || '',
+      location:    j.location?.display_name || '',
+      salary:      j.salary_min ? `₹${Math.round(j.salary_min/1000)}k – ₹${Math.round(j.salary_max/1000)}k` : '',
+      description: (j.description || '').slice(0, 200),
+      url:         j.redirect_url || '',
+      created:     j.created?.slice(0, 10) || '',
+    }));
+    res.json({ jobs, query, count: data.count || jobs.length });
+  } catch (err) {
+    res.status(502).json({ error: err.message, jobs: [] });
+  }
+}
+
+const { checkRateLimit, rateLimitExceeded } = require('../_lib/rateLimit');
+
+module.exports = async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const type = req.query?.type || req.body?.type;
+  if (type === 'scan') {
+    const rl = await checkRateLimit(req, 'scan', 5);
+    if (!rl.allowed) return rateLimitExceeded(res, rl.resetAt);
+    return handleScan(req, res);
+  }
+  if (type === 'jobs') {
+    const rl = await checkRateLimit(req, 'jobs', 15);
+    if (!rl.allowed) return rateLimitExceeded(res, rl.resetAt);
+    return handleJobs(req, res);
+  }
+  return res.status(400).json({ error: 'type must be "scan" or "jobs"' });
 };

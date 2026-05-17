@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { loadData, saveData, loadFromDB, saveToDB } from './utils/storage.js';
+import { loadData, saveData, loadFromDB, saveToDB, buildSteps, extractProgress } from './utils/storage.js';
 import { today } from './utils/helpers.js';
 import { warmupCodeApi } from './utils/codeRunner.js';
 import LandingPage from './components/LandingPage.jsx';
@@ -10,6 +10,7 @@ import DSASheet from './components/DSASheet/index.jsx';
 import CareerTools from './components/CareerTools.jsx';
 import CodeEditorModal from './components/CodeEditorModal.jsx';
 import AppModal from './components/AppModal.jsx';
+import SearchModal from './components/SearchModal.jsx';
 
 export default function App() {
   const [user,          setUser]          = useState(null);
@@ -25,6 +26,7 @@ export default function App() {
   const [appModal,      setAppModal]      = useState(null);   // null|{mode,id}
   const [highlightPi,   setHighlightPi]   = useState(null);  // briefly flash a problem row
   const [theme,         setTheme]         = useState(() => localStorage.getItem('vk_theme') || 'dark');
+  const [searchOpen,    setSearchOpen]    = useState(false);
 
   const storeKey = user ? `vk_a2z_v1_${user.id}` : 'vk_a2z_v1';
 
@@ -33,6 +35,15 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('vk_theme', theme);
   }, [theme]);
+
+  // Global Cmd+K / Ctrl+K search shortcut
+  useEffect(() => {
+    function handler(e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setSearchOpen(v => !v); }
+    }
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   // Auth check on mount
   useEffect(() => {
@@ -191,6 +202,17 @@ export default function App() {
     history.pushState(null, '', `#dsa/${selectedStep}`);
   }
 
+  function switchSheet(sheetId) {
+    const progress = extractProgress(data);
+    const next = { ...data, activeSheet: sheetId, steps: buildSteps(sheetId, progress) };
+    setData(next);
+    saveData(storeKey, next);
+    if (user) saveToDB(next, codeStore);
+    setSelectedStep(null);
+    setSelectedSub(null);
+    history.pushState(null, '', '#dsa');
+  }
+
   function toggleProblem(si, ssi, pi, val) {
     const next = JSON.parse(JSON.stringify(data));
     next.steps[si].substeps[ssi].problems[pi].done = val;
@@ -210,10 +232,7 @@ export default function App() {
     const next = JSON.parse(JSON.stringify(data));
     const p = next.steps[si].substeps[ssi].problems[pi];
     p.revision = !p.revision;
-    if (p.revision) {
-      p.nextReview  = addDays(1);
-      p.reviewCount = 0;
-    } else {
+    if (!p.revision) {
       delete p.nextReview;
       delete p.reviewCount;
     }
@@ -223,9 +242,9 @@ export default function App() {
   function reviewDone(si, ssi, pi) {
     const next = JSON.parse(JSON.stringify(data));
     const p = next.steps[si].substeps[ssi].problems[pi];
-    const count = (p.reviewCount || 0) + 1;
-    p.reviewCount = count;
-    p.nextReview  = addDays(REVIEW_INTERVALS[Math.min(count, REVIEW_INTERVALS.length - 1)]);
+    p.revision = false;
+    delete p.nextReview;
+    delete p.reviewCount;
     persistData(next);
   }
 
@@ -314,6 +333,7 @@ export default function App() {
           user={user}
           onTabChange={switchTab}
           onLogout={handleLogout}
+          onOpenSearch={() => setSearchOpen(true)}
         />
         <div className="main">
           <Topbar
@@ -344,6 +364,7 @@ export default function App() {
                 onSaveNote={saveNote}
                 onDailyNoteSave={saveDailyNote}
                 onOpenCodeEditor={openCodeEditor}
+                onSwitchSheet={switchSheet}
               />
             )}
             {activeTab === 'career' && <CareerTools />}
@@ -374,6 +395,14 @@ export default function App() {
           onClose={handleCodeClose}
           onLangChange={handleLangChange}
           onMarkDone={markCodeProblemDone}
+        />
+      )}
+
+      {searchOpen && data && (
+        <SearchModal
+          steps={data.steps}
+          onOpen={(si, ssi, pi) => { openCodeEditor(si, ssi, pi); setSearchOpen(false); }}
+          onClose={() => setSearchOpen(false)}
         />
       )}
 

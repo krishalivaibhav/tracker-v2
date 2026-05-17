@@ -9,7 +9,7 @@ export default function StepDetail({ data, stepIdx, onBack, onSubstepClick }) {
         <button className="btn btn-ghost" onClick={onBack}>← All Steps</button>
         <div>
           <div style={{ fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: step.color, marginBottom: '1px' }}>Step {stepIdx+1}</div>
-          <div style={{ fontSize: '20px', fontWeight: 700, letterSpacing: '-0.02em' }}>{step.name}</div>
+          <div style={{ fontSize: '20px', fontWeight: 700, letterSpacing: '-0.02em' }}>{step.name.replace(/\s*\[.*?\]/g, '').trim()}</div>
         </div>
       </div>
 

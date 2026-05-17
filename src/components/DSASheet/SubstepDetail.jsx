@@ -61,7 +61,7 @@ export default function SubstepDetail({ data, stepIdx, substepIdx, highlightPi, 
 
       <div className="detail-header">
         <div>
-          <div style={{ fontSize: '10.5px', fontWeight: 700, color: step.color, textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '2px' }}>Step {stepIdx+1} · {step.name}</div>
+          <div style={{ fontSize: '10.5px', fontWeight: 700, color: step.color, textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '2px' }}>Step {stepIdx+1} · {step.name.replace(/\s*\[.*?\]/g, '').trim()}</div>
           <div style={{ fontSize: '20px', fontWeight: 700, letterSpacing: '-0.02em' }}>{ss.name}</div>
         </div>
         <div className="detail-stats">
@@ -105,21 +105,14 @@ export default function SubstepDetail({ data, stepIdx, substepIdx, highlightPi, 
               const noteVal  = noteValues[pi] !== undefined ? noteValues[pi] : (p.note || '');
 
               let nameCell;
-              if (p.lc) {
-                nameCell = (
-                  <a href={`https://leetcode.com/problems/${p.lc}/`} target="_blank" rel="noopener" className={`prob-link ${p.done ? 'done' : ''}`}>
-                    {p.t}<img src="leetcode.png" className="platform-logo" alt="LC" />
-                  </a>
-                );
-              } else {
-                nameCell = (
-                  <button className={`prob-editor-btn ${p.done ? 'done' : ''}`} onClick={() => onOpenCodeEditor(stepIdx, substepIdx, pi)}>
-                    {p.t}
-                    {p.gfg && <img src="gfg.png" className="platform-logo" alt="GFG" />}
-                    {' '}<span className="editor-hint">▶ editor</span>
-                  </button>
-                );
-              }
+              nameCell = (
+                <button className={`prob-editor-btn ${p.done ? 'done' : ''}`} onClick={() => onOpenCodeEditor(stepIdx, substepIdx, pi)}>
+                  {p.t}
+                  {p.lc && <img src="leetcode.png" className="platform-logo" alt="LC" />}
+                  {p.gfg && <img src="gfg.png" className="platform-logo" alt="GFG" />}
+                  {' '}<span className="editor-hint">▶ editor</span>
+                </button>
+              );
 
               return (
                 <>

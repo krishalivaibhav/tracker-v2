@@ -1,4 +1,4 @@
-// data.js — Striver's A2Z DSA Sheet (474 problems)
+// data.js — DSA Foundation Path (473 problems)
 // Q(title, slug, difficulty, lcSlug, gfgUrl, desc, examples, type)
 // type: 'number'|'array'|'string'|'pattern'|'custom' — used for starter-code generation
 

@@ -1,26 +1,24 @@
 import { lcStats, lcLinkedSolved, computeStreak, lastSolvedDate, stepSolved, stepProblems } from '../utils/stats.js';
 import { fmtDate } from '../utils/helpers.js';
-import { LC_TOTAL } from '../utils/storage.js';
 
 export default function Dashboard({ data, user, onTabChange, onOpenRevisionProblem, onReviewDone }) {
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const stats = lcStats(data.steps);
-  const pct = (stats.total / LC_TOTAL * 100).toFixed(0);
+  const sheetTotal = data.steps.reduce((acc, step) =>
+    acc + step.substeps.reduce((a, ss) => a + ss.problems.length, 0), 0);
+  const pct = (stats.total / Math.max(1, sheetTotal) * 100).toFixed(0);
   const streak = computeStreak(data.steps);
   const lastSolved = lastSolvedDate(data.steps);
 
   const todayStr = new Date().toISOString().slice(0, 10);
-  const revisionDue = [], revisionUpcoming = [];
+  const revisionList = [];
   const timeBuckets = { E: [], M: [], H: [] };
   const activityMap = {};
   data.steps.forEach((step, si) => {
     step.substeps.forEach((ss, ssi) => {
       ss.problems.forEach((p, pi) => {
-        if (p.revision) {
-          const due = !p.nextReview || p.nextReview <= todayStr;
-          (due ? revisionDue : revisionUpcoming).push({ p, step, ss, si, ssi, pi });
-        }
+        if (p.revision) revisionList.push({ p, step, ss, si, ssi, pi });
         if (p.lastTime > 0 && p.d) timeBuckets[p.d]?.push(p.lastTime);
         if (p.done && p.solvedOn) activityMap[p.solvedOn] = (activityMap[p.solvedOn] || 0) + 1;
       });
@@ -64,14 +62,14 @@ export default function Dashboard({ data, user, onTabChange, onOpenRevisionProbl
       <div className="page-header pop-in">
         <div>
           <h1 className="page-title">{greet}, <em>{user?.name?.split(' ')[0] || 'there'}</em>.</h1>
-          <p className="page-sub">{stats.total}/{LC_TOTAL} problems solved</p>
+          <p className="page-sub">{stats.total}/{sheetTotal} problems solved</p>
         </div>
       </div>
 
       <div className="dash-stats pop-in">
         <div className="card tight">
           <div className="card-title">DSA Progress</div>
-          <div className="stat-val" style={{ color: 'var(--accent)' }}>{stats.total}<sup>/{LC_TOTAL}</sup></div>
+          <div className="stat-val" style={{ color: 'var(--accent)' }}>{stats.total}<sup>/{sheetTotal}</sup></div>
           <div className="bar-track" style={{ marginTop: '12px' }}>
             <div className="bar-fill" style={{ width: `${pct}%` }} />
           </div>
@@ -90,7 +88,7 @@ export default function Dashboard({ data, user, onTabChange, onOpenRevisionProbl
         </div>
         <div className="card tight">
           <div className="card-title">On LeetCode</div>
-          <div className="stat-val" style={{ color: '#F97316' }}>{lcLinkedSolved(data.steps)}<sup>/{LC_TOTAL}</sup></div>
+          <div className="stat-val" style={{ color: '#F97316' }}>{lcLinkedSolved(data.steps)}<sup>/{sheetTotal}</sup></div>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '12px' }}>LC-linked solved</div>
         </div>
         {hasTimeData && (
@@ -141,29 +139,17 @@ export default function Dashboard({ data, user, onTabChange, onOpenRevisionProbl
         </div>
       </div>
 
-      {(revisionDue.length > 0 || revisionUpcoming.length > 0) && (
+      {revisionList.length > 0 && (
         <div className="card mt-6 pop-in d2">
           <div className="card-title-row">
             <div className="card-title">
               Revision Queue
-              <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--med)', marginLeft: '6px' }}>
-                {revisionDue.length} due
-              </span>
-              {revisionUpcoming.length > 0 && (
-                <span style={{ fontSize: '11px', fontWeight: 400, color: 'var(--text-faint)', marginLeft: '6px' }}>
-                  · {revisionUpcoming.length} upcoming
-                </span>
-              )}
+              <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--text-faint)', marginLeft: '6px' }}>{revisionList.length} marked</span>
             </div>
             <button className="btn btn-sm btn-ghost" onClick={() => onTabChange('leetcode')}>go to DSA →</button>
           </div>
-          {revisionDue.length === 0 && (
-            <div style={{ fontSize: '13px', color: 'var(--text-faint)', padding: '12px 0' }}>
-              All caught up! Next review in {revisionUpcoming[0]?.p.nextReview || '—'}.
-            </div>
-          )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
-            {revisionDue.map(({ p, step, ss, si, ssi, pi }, i) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px', maxHeight: '280px', overflowY: 'auto', paddingRight: '2px' }}>
+            {revisionList.map(({ p, step, ss, si, ssi, pi }, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: 'var(--surface-2)', borderRadius: '8px' }}>
                 <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: step.color, flexShrink: 0 }} />
                 <button onClick={() => onOpenRevisionProblem(si, ssi, pi)}
@@ -175,7 +161,7 @@ export default function Dashboard({ data, user, onTabChange, onOpenRevisionProbl
                 {p.d === 'M' && <span className="diff diff-medium" style={{ flexShrink: 0 }}>Med</span>}
                 {p.d === 'H' && <span className="diff diff-hard" style={{ flexShrink: 0 }}>Hard</span>}
                 <button onClick={() => onReviewDone(si, ssi, pi)}
-                  title="Mark as reviewed"
+                  title="Remove from revision queue"
                   style={{ flexShrink: 0, background: 'var(--easy-soft)', border: '1px solid var(--easy)', color: 'var(--easy)', borderRadius: '6px', padding: '3px 8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
                   ✓ Done
                 </button>

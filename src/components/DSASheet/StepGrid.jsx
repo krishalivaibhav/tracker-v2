@@ -1,6 +1,6 @@
 import { lcStats, stepSolved, stepProblems, getDailyLog } from '../../utils/stats.js';
-import { LC_TOTAL } from '../../utils/storage.js';
 import { fmtDate } from '../../utils/helpers.js';
+import { SHEETS } from '../../sheets.js';
 import { useState } from 'react';
 
 const PENCIL_SVG = (
@@ -62,24 +62,47 @@ function DailyLog({ steps, dailyNotes, onNoteSave }) {
   );
 }
 
-export default function StepGrid({ data, onStepClick, onNoteSave }) {
+export default function StepGrid({ data, onStepClick, onNoteSave, onSwitchSheet }) {
   const stats = lcStats(data.steps);
+  const sheetId = data.activeSheet || 'a2z';
+  const sheet = SHEETS[sheetId] || SHEETS.a2z;
+  const sheetTotal = data.steps.reduce((acc, step) =>
+    acc + step.substeps.reduce((a, ss) => a + ss.problems.length, 0), 0);
 
   return (
     <div>
       <div className="page-header pop-in">
         <div>
-          <h1 className="page-title">getaway's <em>DSA</em> sheet.</h1>
-          <p className="page-sub">473 problems across 18 steps. Check off problems as you solve them.</p>
+          <h1 className="page-title"><em>{sheet.name}</em></h1>
+          <p className="page-sub">{sheet.subtitle}</p>
         </div>
+      </div>
+
+      {/* Sheet Switcher */}
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
+        {Object.values(SHEETS).map(s => (
+          <button
+            key={s.id}
+            onClick={() => onSwitchSheet(s.id)}
+            style={{
+              padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
+              cursor: 'pointer', transition: 'all 0.15s',
+              background: s.id === sheetId ? s.color : 'var(--surface-2)',
+              color: s.id === sheetId ? '#fff' : 'var(--text-muted)',
+              border: `1.5px solid ${s.id === sheetId ? s.color : 'var(--border)'}`,
+            }}
+          >
+            {s.name}
+          </button>
+        ))}
       </div>
 
       <div className="dash-stats pop-in" style={{ marginBottom: '24px' }}>
         <div className="card tight">
           <div className="card-title">Total Solved</div>
-          <div className="stat-val" style={{ color: 'var(--accent)' }}>{stats.total}<sup>/{LC_TOTAL}</sup></div>
+          <div className="stat-val" style={{ color: 'var(--accent)' }}>{stats.total}<sup>/{sheetTotal}</sup></div>
           <div className="bar-track" style={{ marginTop: '12px' }}>
-            <div className="bar-fill" style={{ width: `${(stats.total/LC_TOTAL*100).toFixed(1)}%` }} />
+            <div className="bar-fill" style={{ width: `${(stats.total/Math.max(1,sheetTotal)*100).toFixed(1)}%` }} />
           </div>
         </div>
         <div className="card tight">
@@ -115,7 +138,7 @@ export default function StepGrid({ data, onStepClick, onNoteSave }) {
             <div key={step.id} className="step-card" style={{ borderLeftColor: step.color }} onClick={() => onStepClick(si)}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
                 <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: step.color, display: 'grid', placeItems: 'center', color: 'white', fontSize: '10px', fontWeight: 700, flexShrink: 0, marginTop: '1px' }}>{si+1}</div>
-                <div style={{ fontSize: '13px', fontWeight: 600, lineHeight: 1.3 }}>{step.name}</div>
+                <div style={{ fontSize: '13px', fontWeight: 600, lineHeight: 1.3 }}>{step.name.replace(/\s*\[.*?\]/g, '').trim()}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '8px' }}>
                 <span style={{ fontFamily: 'var(--font-display)', fontSize: '26px', lineHeight: 1, color: step.color }}>{solved}</span>

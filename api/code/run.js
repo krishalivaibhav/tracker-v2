@@ -109,7 +109,9 @@ async function runLocally(language, sourceCode, stdin) {
   } finally { await fs.rm(dir, { recursive: true, force: true }); }
 }
 
-async function runViaWandbox(language, sourceCode, stdin) {
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function runViaWandbox(language, sourceCode, stdin, attempt = 0) {
   // Wandbox saves Java as prog.java — public class requires filename to match
   if (language === 'java') {
     sourceCode = sourceCode.replace(/\bpublic\s+(class\s+\w)/g, '$1');
@@ -141,6 +143,12 @@ async function runViaWandbox(language, sourceCode, stdin) {
 
   const stdout = (data.program_output || '').trim();
   const stderr = (data.program_error  || '').trim();
+
+  // Retry once on OCI/container resource errors (transient Wandbox infrastructure issue)
+  if (/OCI runtime|crun:|Resource temporarily unavailable/i.test(stderr) && attempt === 0) {
+    await sleep(700);
+    return runViaWandbox(language, sourceCode, stdin, 1);
+  }
 
   if (data.status !== '0' && !stdout) {
     return { output: stderr || `Runtime error (exit ${data.status})`, is_error: true };

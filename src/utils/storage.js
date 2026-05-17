@@ -1,7 +1,7 @@
-import { A2Z_STEPS } from '../data.js';
+import { SHEETS } from '../sheets.js';
 
 export const PLACEMENT_DATE = new Date('2026-10-01');
-export const LC_TOTAL = 473;
+export const LC_TOTAL = 473; // kept for any legacy refs; prefer computing from data.steps
 
 export const DEFAULT_PROJECTS = [
   { id: 1, name: 'AI Resume & Job Match Analyzer', stack: 'FastAPI · Groq · OpenAI · Ollama · Docker', status: 'complete',
@@ -41,8 +41,25 @@ export function freshData() {
     applications: [],
     projects: JSON.parse(JSON.stringify(DEFAULT_PROJECTS)),
     cgpa: { current: 7.16, afterSem: 5 },
+    activeSheet: 'a2z',
   };
 }
+
+export function buildSteps(sheetId, progress) {
+  const sheet = SHEETS[sheetId] || SHEETS.a2z;
+  return sheet.steps.map(step => ({
+    ...step,
+    substeps: step.substeps.map(ss => ({
+      ...ss,
+      problems: ss.problems.map(p => {
+        const prog = progress[p.s];
+        return prog ? { ...p, ...prog } : { ...p };
+      }),
+    })),
+  }));
+}
+
+export { extractProgress };
 
 export function loadData(storeKey) {
   const raw = localStorage.getItem(storeKey);
@@ -70,16 +87,8 @@ export function loadData(storeKey) {
     }
   }
 
-  base.steps = A2Z_STEPS.map(step => ({
-    ...step,
-    substeps: step.substeps.map(ss => ({
-      ...ss,
-      problems: ss.problems.map(p => {
-        const prog = base.progress[p.s];
-        return prog ? { ...p, ...prog } : { ...p };
-      }),
-    })),
-  }));
+  if (!base.activeSheet) base.activeSheet = 'a2z';
+  base.steps = buildSteps(base.activeSheet, base.progress);
 
   if (!base.dailyNotes) base.dailyNotes = {};
   return base;
@@ -90,6 +99,7 @@ export function saveData(storeKey, d) {
   localStorage.setItem(storeKey, JSON.stringify({
     progress, dailyNotes: d.dailyNotes,
     applications: d.applications, projects: d.projects, cgpa: d.cgpa,
+    activeSheet: d.activeSheet || 'a2z',
   }));
 }
 
@@ -134,6 +144,7 @@ export function saveToDB(d, codeStore) {
       projects: d.projects,
       cgpa: d.cgpa,
       codeStore: codeStore || {},
+      activeSheet: d.activeSheet || 'a2z',
     }),
   }).catch(() => {});
 }
